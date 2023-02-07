@@ -1,0 +1,5 @@
+﻿*.obj
+*.exe
+*.res
+*.tds
+stl_pch.*
