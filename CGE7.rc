@@ -1,0 +1,130 @@
+#include "windows.h"
+#include "CGE7.h"
+
+//////////////////////////////////////////////
+//
+// Menu
+//
+
+myIcon	ICON cge7.ico
+myIconS	ICON cge7s.ico
+
+CGE7Menu MENU DISCARDABLE
+{
+    POPUP "ファイル(&F)"
+    {
+        MENUITEM "開く(&O)...\aCtrl+O",		IDM_OPEN
+        MENUITEM "上書き保存(&S)\aCtrl+S",	IDM_SAVE
+        MENUITEM "名前をつけて保存(&A)",	IDM_SAVEAS
+	MENUITEM SEPARATOR
+	MENUITEM "オーバーレイBMP読み込み",	IDM_LOADBMP
+//	MENUITEM "Test",			IDM_TEST
+	MENUITEM SEPARATOR
+        MENUITEM "終了(&X)",			IDM_END
+    }
+    POPUP "編集(&E)"
+    {
+        MENUITEM "元に戻す\aCtrl+Z",		IDM_UNDO,	GRAYED
+        MENUITEM "やっぱり戻さない\aCtrl+Y",	IDM_REDO,	GRAYED
+	MENUITEM SEPARATOR
+        MENUITEM "切り取り\aCtrl+X",		IDM_CUT,	GRAYED
+        MENUITEM "コピー\aCtrl+C",		IDM_COPY,	GRAYED
+        MENUITEM "貼り付け\aCtrl+V",		IDM_PASTE,	GRAYED
+        MENUITEM "画像でコピー",		IDM_BITMAPCOPY,	GRAYED
+	MENUITEM SEPARATOR
+        MENUITEM "全てを選択\aCtrl+A",		IDM_SELALL
+	MENUITEM SEPARATOR
+        MENUITEM "塗りつぶし",			IDM_FILL,	GRAYED
+        MENUITEM "左右反転",			IDM_HREVERSE,	GRAYED
+        MENUITEM "文字列入力",			IDM_STRINPUT
+    }
+    POPUP "表示(&V)"
+    {
+        MENUITEM "グリッド表示\aCtrl+G",	IDM_GRID,	CHECKED
+        MENUITEM "拡大表示\aCtrl+E",		IDM_EXPAND,	CHECKED
+        MENUITEM "アニメーション枠表示",	IDM_ANIMFRAME,	CHECKED
+        MENUITEM "オーバーレイ表示",		IDM_OVERLAY,	CHECKED
+        MENUITEM "空白をマーク\aF11",		IDM_SHOWSPACE
+	MENUITEM SEPARATOR
+        MENUITEM "補助パレット\aSPACE",		IDM_ALTPAL
+    }
+    POPUP "アニメーション(&A)"
+    {
+        MENUITEM "1コマめに設定",		IDM_ANIM1,	GRAYED
+        MENUITEM "2コマめに設定",		IDM_ANIM2,	GRAYED
+        MENUITEM "3コマめに設定",		IDM_ANIM3,	GRAYED
+        MENUITEM "4コマめに設定",		IDM_ANIM4,	GRAYED
+        MENUITEM "5コマめに設定",		IDM_ANIM5,	GRAYED
+        MENUITEM "6コマめに設定",		IDM_ANIM6,	GRAYED
+        MENUITEM "7コマめに設定",		IDM_ANIM7,	GRAYED
+        MENUITEM "8コマめに設定",		IDM_ANIM8,	GRAYED
+        MENUITEM "9コマめに設定",		IDM_ANIM9,	GRAYED
+        MENUITEM "全コマをキャンセル",		IDM_ANIM0,	GRAYED
+	MENUITEM SEPARATOR
+        MENUITEM "アニメーション開始...",	IDM_DO_ANIM,	GRAYED
+    }
+    POPUP "セミグラフィック(&S)"
+    {
+        MENUITEM "セミグラフィックモード",	IDM_SGMODE
+	MENUITEM SEPARATOR
+        MENUITEM "選択範囲内を左にシフト\aCtrl+←", IDM_SG_LEFT
+        MENUITEM "選択範囲内を右にシフト\aCtrl+→", IDM_SG_RIGHT
+        MENUITEM "選択範囲内を上にシフト\aCtrl+↑", IDM_SG_UP
+        MENUITEM "選択範囲内を下にシフト\aCtrl+↓", IDM_SG_DOWN
+    }
+    POPUP "ヘルプ(&H)"
+    {
+        MENUITEM "About(&A)...",IDM_ABOUT
+    }
+}
+
+//////////////////////////////////////////////
+//
+// Bitmap
+//
+
+ID_TOOLBARBMP	BITMAP DISCARDABLE "buttons.bmp"
+
+//////////////////////////////////////////////
+//
+// Accelerator
+//
+
+myAccel ACCELERATORS DISCARDABLE
+{
+    "X",            IDM_CUT,		VIRTKEY, CONTROL, NOINVERT
+    "C",            IDM_COPY,		VIRTKEY, CONTROL, NOINVERT
+    "V",            IDM_PASTE,		VIRTKEY, CONTROL, NOINVERT
+    "A",            IDM_SELALL,		VIRTKEY, CONTROL, NOINVERT
+    "Z",            IDM_UNDO,		VIRTKEY, CONTROL, NOINVERT
+    "Y",            IDM_REDO,		VIRTKEY, CONTROL, NOINVERT
+    "S",            IDM_SAVE,		VIRTKEY, CONTROL, NOINVERT
+    "O",            IDM_OPEN,		VIRTKEY, CONTROL, NOINVERT
+    "G",            IDM_GRID,		VIRTKEY, CONTROL, NOINVERT
+    "E",            IDM_EXPAND,		VIRTKEY, CONTROL, NOINVERT
+}
+
+//////////////////////////////////////////////
+//
+// Dialogues
+//
+IDD_STRINPUT DIALOG DISCARDABLE  0, 0, 162, 107
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "テキスト入力"
+FONT 9, "ＭＳ Ｐゴシック"
+{
+    DEFPUSHBUTTON   "OK",IDOK,65,86,42,14
+    PUSHBUTTON      "Cancel",IDCANCEL,116,86,42,14
+    EDITTEXT        IDC_EDIT_TEXT, 0,2,162,80, ES_MULTILINE|ES_WANTRETURN
+    CONTROL         "縦書き", IDC_CHECK_TATE, "Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP, 4,86,30,10
+}
+
+IDD_ANIM DIALOG DISCARDABLE  0, 0, 200, 100
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "アニメーション"
+FONT 9, "ＭＳ Ｐゴシック"
+{
+    DEFPUSHBUTTON   "閉じる",IDOK,80,80,40,14
+}
+
