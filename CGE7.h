@@ -1,22 +1,22 @@
 #ifndef __CGE7_H__
 #define __CGE7_H__
 
-#define VERSTRING	"0.15"
+#define VERSTRING	"0.16"
 
-#define YOKO	(8+640+10+(16*16+15*2)+8)
-#define TATE	(8+400+8)
+//#define YOKO	(8+640+10+(16*16+15*2)+8)
+//#define TATE	(8+400+8)
 
-#define YOKO0	(8+320+10+(16*8+15*2)+8)
-#define TATE0	(8+(22*8+21*2)+8)
+//#define YOKO0	(8+320+10+(16*8+15*2)+8)
+//#define TATE0	(8+(22*8+21*2)+8)
 
 #define MAINX	8
 #define MAINY	8
 
-#define CPALX	(8+640+10)
+//#define CPALX	(8+640+10)
 #define CPALY	(8-3)
 
-#define CPALX0	(8+320+10)
-#define CPALY0	(8-3)
+//#define CPALX0	(8+320+10)
+//#define CPALY0	(8-3)
 
 #define FLOATERX    0
 #define FLOATERY    TATE
@@ -64,6 +64,14 @@
 #define IDM_SG_RIGHT	1082
 #define IDM_SG_UP	1083
 #define IDM_SG_DOWN	1084
+
+#define	IDM_ZOOM1	1100
+#define	IDM_ZOOM2	1101
+#define	IDM_ZOOM3	1102
+#define	IDM_ZOOM4	1103
+#define	IDM_ZOOM5	1104
+#define	IDM_ZOOM6	1105
+#define	IDM_ZOOMMAX	IDM_ZOOM6
 
 #define	IDM_ABOUT	1999
 

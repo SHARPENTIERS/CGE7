@@ -41,7 +41,16 @@ CGE7Menu MENU DISCARDABLE
     POPUP "表示(&V)"
     {
         MENUITEM "グリッド表示\aCtrl+G",	IDM_GRID,	CHECKED
-        MENUITEM "拡大表示\aCtrl+E",		IDM_EXPAND,	CHECKED
+	POPUP    "拡大表示"
+	{
+	    MENUITEM "x1",			IDM_ZOOM1
+	    MENUITEM "x2",			IDM_ZOOM2
+	    MENUITEM "x3",			IDM_ZOOM3
+	    MENUITEM "x4",			IDM_ZOOM4
+	    MENUITEM "x5",			IDM_ZOOM5
+	    MENUITEM "x6",			IDM_ZOOM6
+	}
+//      MENUITEM "拡大表示\aCtrl+E",		IDM_EXPAND,	CHECKED
         MENUITEM "アニメーション枠表示",	IDM_ANIMFRAME,	CHECKED
         MENUITEM "オーバーレイ表示",		IDM_OVERLAY,	CHECKED
         MENUITEM "空白をマーク\aF11",		IDM_SHOWSPACE

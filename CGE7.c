@@ -4,6 +4,10 @@
 #include "CGE7.h"
 #include "cpal.h"
 
+int YOKO;
+int TATE;
+int CPALX;
+
 HINSTANCE hInst;
 
 HBRUSH cursorbrush;
@@ -68,6 +72,7 @@ int atr[1000];
 
 int showgrid = 1;
 int expansion = 1;
+int zoomratio = 1;
 int showanimframe = 1;
 int showoverlay = 1;
 int showdispc00 = 0;
@@ -173,9 +178,26 @@ HFONT getfont(char *name, int size) {
 }
 
 /*---------------------------------------------------------------------------*/
+int getYOKO() {
+	if (expansion == 0) {
+	    return (8+320+10+(16*8+15*2)+8);
+	}
+	return (8+(320*(expansion+1))+10+((16*8+15)*(expansion+1))+8);
+}
+int getTATE() {
+	if (expansion == 0) {
+	    return (8+(22*8+21*2)+8);
+	}
+	return (8+(200*(expansion+1))+8);
+}
+int getCPALX() {
+	return (8+(320*(expansion+1))+10);
+}
+
+/*---------------------------------------------------------------------------*/
 int winxy2vramxy(int gx, int gy, int *vx, int *vy) {
 	int w;
-	w = 8 << expansion;
+	w = 8 * (expansion + 1);
 	if (gx >= MAINX && gx < (MAINX+40*w) &&
 	    gy >= MAINY && gy < (MAINY+25*w)) {
 		*vx = (gx - MAINX)/w;
@@ -186,7 +208,7 @@ int winxy2vramxy(int gx, int gy, int *vx, int *vy) {
 }
 int winxy2vramxy2(int gx, int gy, int *vx, int *vy) {
 	int w;
-	w = 8 << expansion;
+	w = 8 * (expansion + 1);
 	if (gx < MAINX) gx = MAINX;
 	if (gy < MAINY) gy = MAINY;
 	gx -= MAINX;
@@ -200,17 +222,12 @@ int winxy2vramxy2(int gx, int gy, int *vx, int *vy) {
 	return 1;
 }
 void vramxy2winxy(int vx, int vy, int *gx, int *gy) {
-	if (expansion) {
-	    *gx = (vx << 4) + MAINX;
-	    *gy = (vy << 4) + MAINY;
-	} else {
-	    *gx = (vx << 3) + MAINX;
-	    *gy = (vy << 3) + MAINY;
-	}
+	*gx = vx * 8 * (expansion + 1) + MAINX;
+	*gy = vy * 8 * (expansion + 1) + MAINY;
 }
 int winxy2sgxy(int gx, int gy, int *sx, int *sy) {
 	int w;
-	w = 8 << expansion;
+	w = 8 * (expansion + 1);
 	if (gx >= MAINX && gx < (MAINX+40*w) &&
 	    gy >= MAINY && gy < (MAINY+25*w)) {
 		*sx = (gx - MAINX)/(w>>1);
@@ -225,14 +242,12 @@ int sgxy2mask(int sx, int sy) {
 
 int winxy2palindex(int gx, int gy) {
 	int x, y, w;
-	if (expansion) {
-	    x = CPALX;
-	    y = CPALY;
-	    w = 18;
-	} else {
-	    x = CPALX0;
-	    y = CPALY0;
+	x = CPALX;
+	y = CPALY;
+	if (expansion == 0) {
 	    w = 10;
+	} else {
+	    w = 9*(expansion+1);
 	}
 	if (gx >= (x-1) && gx < (x+w*16) &&
 	    gy >= (y-1) && gy < (y+w*22)) {
@@ -241,13 +256,14 @@ int winxy2palindex(int gx, int gy) {
 	return -1;
 }
 void palxy2winxy(int px, int py, int *gx, int *gy) {
-	if (expansion) {
-	    *gx = CPALX + px*18;
-	    *gy = CPALY + py*18;
+	int w;
+	if (expansion == 0) {
+	    w = 10;
 	} else {
-	    *gx = CPALX0 + px*10;
-	    *gy = CPALY0 + py*10;
+	    w = 9*(expansion+1);
 	}
+	*gx = CPALX + px*w;
+	*gy = CPALY + py*w;
 }
 
 const LPCTSTR onsel2cursor[10] = {
@@ -284,6 +300,43 @@ int is_onselection(int x, int y) {
 }
 
 /*---------------------------------------------------------------------------*/
+void drawchr_m(int x, int y, int chr, int attr) {
+	int i,j,k,l;
+	unsigned char c, *cgr, m;
+	DWORD fc, bc, *p1;
+	cgr = &cgrom[((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
+	fc = colortable[(attr & 0x70) >> 4];
+	bc = colortable[(attr & 0x07)     ];
+	for (i=0; i<8; i++) {
+	    m = *cgr++;
+	    for (k=0; k<expansion+1; k++) {
+		p1 = (DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-y)*(bkbuf.w)*4 + x*4];
+		c = m;
+		for (j=0; j<8; j++) {
+		    if (c & 0x80) {
+			for (l=0; l<expansion+1; l++) *p1++ = fc;
+		    } else {
+			for (l=0; l<expansion+1; l++) *p1++ = bc;
+		    }
+		    c <<= 1;
+		}
+		y++;
+	    }
+	}
+	if (showgrid && x < CPALX)
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-8*(expansion+1)))*(bkbuf.w)*4 + x*4]) = gridcolor;
+	if (showdispc00 && !chr) {
+	    l = 8 * (expansion+1);
+	    for (i=l; i; i--) {
+		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   i))*(bkbuf.w)*4 + (x    )*4]) = gridcolor;
+		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   i))*(bkbuf.w)*4 + (x+l-1)*4]) = gridcolor;
+		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   1))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
+		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   l))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
+		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   i))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
+		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-l-1+i))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
+	    }
+	}
+}
 void drawchr_e(int x, int y, int chr, int attr) {
 	int i,j;
 	unsigned char c, *cgr;
@@ -338,7 +391,7 @@ void drawchr_n(int x, int y, int chr, int attr) {
 	    }
 	    y++;
 	}
-	if (showgrid && x < CPALX0)
+	if (showgrid && x < CPALX)
 	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-8))*(bkbuf.w)*4 + x*4]) = gridcolor;
 	if (showdispc00 && !chr) for (i=8; i; i--) {
 	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  i))*(bkbuf.w)*4 + (x    )*4]) = gridcolor;
@@ -351,7 +404,7 @@ void drawchr_n(int x, int y, int chr, int attr) {
 }
 void drawchr(int x, int y, int chr, int attr) {
 	if (expansion)
-	    drawchr_e(x, y, chr, attr);
+	    drawchr_m(x, y, chr, attr);
 	else
 	    drawchr_n(x, y, chr, attr);
 }
@@ -377,7 +430,7 @@ void pset(int x, int y, int c, int a) {
 void drawgrid(void) {
 	int i, j, x, y, w;
 	DWORD *p;
-	w = (expansion) ? 16 : 8;
+	w = 8 * (expansion+1);
 	if (showgrid) {
 	    for (i=0; i<=25; i++) {
 		vramxy2winxy(0, i, &x, &y);
@@ -419,9 +472,9 @@ void drawchrpalette(void) {
 		a |= (k & 0x0100) >> 1;
 		a |= (cspalno >= 2) ? 0x08 : 0;
 		if (expansion)
-		    drawchr_e(CPALX+j*18, CPALY+i*18, c, a);
+		    drawchr_m(CPALX+j*9*(expansion+1), CPALY+i*9*(expansion+1), c, a);
 		else
-		    drawchr_n(CPALX0+j*10, CPALY0+i*10, c, a);
+		    drawchr_n(CPALX+j*10, CPALY+i*10, c, a);
 	    }
 	}
 }
@@ -465,20 +518,20 @@ void updatechrpalette(HWND hwnd) {
 	if (expansion) {
 	    r.left   = CPALX - 2;
 	    r.top    = CPALY + tbHeight - 2;
-	    r.right  = CPALX + 18*16;
-	    r.bottom = CPALY + tbHeight + 18*22;
+	    r.right  = CPALX + 9*(expansion+1)*16;
+	    r.bottom = CPALY + tbHeight + 9*(expansion+1)*22;
 	} else {
-	    r.left   = CPALX0 - 2;
-	    r.top    = CPALY0 + tbHeight - 2;
-	    r.right  = CPALX0 + 10*16;
-	    r.bottom = CPALY0 + tbHeight + 10*22;
+	    r.left   = CPALX - 2;
+	    r.top    = CPALY + tbHeight - 2;
+	    r.right  = CPALX + 10*16;
+	    r.bottom = CPALY + tbHeight + 10*22;
 	}
 	InvalidateRect(hwnd, &r, FALSE);
 }
 void updatescratcharea(HWND hwnd) {
 	RECT r;
 	int w;
-	w = 8 << expansion;
+	w = 8 * (expansion+1);
 	r.left   = MAINX - 1;
 	r.top    = MAINY - 1 + tbHeight;
 	r.right  = MAINX + 40*w + 1;
@@ -503,13 +556,13 @@ void vram2disp(HWND hwnd) {
 void drawpalcursor(HDC hdc) {
 	RECT r;
 	if (expansion) {
-	    r.left   = CPALX + (chrpos & 0x0f)*18 - 1;
-	    r.top    = CPALY + (chrpos >> 4)*18 + tbHeight - 1;
-	    r.right  = r.left + 16 + 2;
-	    r.bottom = r.top + 16 + 2;
+	    r.left   = CPALX + (chrpos & 0x0f)*9*(expansion+1) - 1;
+	    r.top    = CPALY + (chrpos >> 4)*9*(expansion+1) + tbHeight - 1;
+	    r.right  = r.left + 8*(expansion+1) + 2;
+	    r.bottom = r.top  + 8*(expansion+1) + 2;
 	} else {
-	    r.left   = CPALX0 + (chrpos & 0x0f)*10 - 1;
-	    r.top    = CPALY0 + (chrpos >> 4)*10 + tbHeight - 1;
+	    r.left   = CPALX + (chrpos & 0x0f)*10 - 1;
+	    r.top    = CPALY + (chrpos >> 4)*10 + tbHeight - 1;
 	    r.right  = r.left + 8 + 2;
 	    r.bottom = r.top + 8 + 2;
 	}
@@ -829,8 +882,8 @@ void selection_to_floater(void) {
 	    k = (y1+i)*40 + x1;
 	    l = i*40;
 	    for (j = 0; j < (x2-x1+1); j++) {
-		drawchr(FLOATERX+j*(expansion ? 16 : 8),
-			FLOATERY+i*(expansion ? 16 : 8), chr[k], atr[k]);
+		drawchr(FLOATERX+j*8*(expansion+1),
+			FLOATERY+i*8*(expansion+1), chr[k], atr[k]);
 		floaterchr[l] = chr[k];
 		floateratr[l] = atr[k];
 		k++; l++;
@@ -843,7 +896,7 @@ void draw_floater(HDC hdc) {
 	int gx, gy;
 	int w;
 	if (!floater) return;
-	w = 8 << expansion;
+	w = 8*(expansion+1);
 	x1 = (selx1 < 0) ? -selx1 : 0;
 	y1 = (sely1 < 0) ? -sely1 : 0;
 	x2 = ((selx2 > 39) ? 39 : selx2) - selx1;
@@ -882,8 +935,8 @@ void refresh_floater(void) {
 	for (i = 0; i < (sely2-sely1+1); i++) {
 	    l = i*40;
 	    for (j = 0; j < (selx2-selx1+1); j++) {
-		drawchr(FLOATERX+j*(expansion ? 16 : 8),
-			FLOATERY+i*(expansion ? 16 : 8),
+		drawchr(FLOATERX+j*8*(expansion+1),
+			FLOATERY+i*8*(expansion+1),
 			floaterchr[l], floateratr[l]);
 		l++;
 	    }
@@ -1178,6 +1231,32 @@ int WriteMyFile(HWND hWnd, int nodlg)
 	return 1;
 }
 
+void drawOverlayToBackBuf(LPBITMAPINFO bmp) {
+	RECT r;
+	int bw, bh, x;
+	int w, h;
+	double dw, scaling;
+
+	w = 320 * (expansion+1);
+	h = 200 * (expansion+1);
+	SetRect(&r, 0, TATE, w, TATE+h);
+	FillRect(ovbkbuf.hdcMem, &r, (HBRUSH)GetStockObject(BLACK_BRUSH));
+	bw = ovBMP->bmiHeader.biWidth;
+	bh = ovBMP->bmiHeader.biHeight;
+	scaling = (double)h / (double)bh;
+	dw = (double)bw * scaling;
+	x = (int)(((double)w - dw) / 2.0);
+	StretchDIBits(ovbkbuf.hdcMem,
+		x, TATE,		/* dest pos */
+		(int)dw, h,		/* dest width, height */
+		0, 0,			/* src pos */
+		bw, bh,			/* src width, height */
+		(LPBYTE)(&ovBMP->bmiColors[0]) + sizeof(RGBQUAD) * ovBMP->bmiHeader.biClrUsed,
+		ovBMP,			/* BITMAPINFO ptr */
+		DIB_RGB_COLORS,		/* use RGB palette */
+		SRCCOPY);		/* copy */
+}
+
 char szBMPFile[MAX_PATH];
 char szBMPFileName[MAX_PATH];
 int OpenBMPFile(HWND hWnd)
@@ -1187,9 +1266,6 @@ int OpenBMPFile(HWND hWnd)
 	HANDLE hFile;
 	DWORD dwAccBytes;
 	char *filebuf;
-	int w, h, x;
-	double dw, scaling;
-	RECT r;
 
 	memset(&ofn, 0, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
@@ -1210,22 +1286,7 @@ int OpenBMPFile(HWND hWnd)
 	ovBMP = loadBMPfile(szBMPFileName);
 	if (ovBMP == NULL) return 0;
 
-	SetRect(&r, 0, TATE, 640, TATE+400);
-	FillRect(ovbkbuf.hdcMem, &r, (HBRUSH)GetStockObject(BLACK_BRUSH));
-	w = ovBMP->bmiHeader.biWidth;
-	h = ovBMP->bmiHeader.biHeight;
-	scaling = 400.0 / (double)h;
-	dw = (double)w * scaling;
-	x = (int)((640.0 - dw) / 2.0);
-	StretchDIBits(ovbkbuf.hdcMem,
-		x, TATE,		/* dest pos */
-		(int)dw, 400,		/* dest width, height */
-		0, 0,			/* src pos */
-		w, h,			/* src width, height */
-		(LPBYTE)(&ovBMP->bmiColors[0]) + sizeof(RGBQUAD) * ovBMP->bmiHeader.biClrUsed,
-		ovBMP,			/* BITMAPINFO ptr */
-		DIB_RGB_COLORS,		/* use RGB palette */
-		SRCCOPY);		/* copy */
+	drawOverlayToBackBuf(ovBMP);
 
 	return 1;
 }
@@ -1248,6 +1309,71 @@ int isDisposalOK(void) {
 }
 
 /*---------------------------------------------------------------------------*/
+void refreshBackBuffer(HWND hwnd) {
+	YOKO = getYOKO();
+	TATE = getTATE();
+	CPALX = getCPALX();
+
+	destroyBackBuffer(&bkbuf);
+	destroyBackBuffer(&ovbkbuf);
+
+	createBackBuffer(hwnd, YOKO, TATE*2, &bkbuf);
+	createBackBuffer(hwnd, YOKO, TATE*2, &ovbkbuf);
+	drawframe();
+
+	if (ovBMP) drawOverlayToBackBuf(ovBMP);
+}
+
+void removeZoomMenuSub(HMENU hMenu, UINT rmvID) {
+	HMENU hSubMenu;
+	UINT id;
+	int i, f;
+	f = 0;
+	for(i = GetMenuItemCount(hMenu) - 1; i >= 0 ; i--) {
+	    hSubMenu = GetSubMenu(hMenu, i);
+	    if(hSubMenu) {
+		removeZoomMenuSub(hSubMenu, rmvID);
+	    } else {
+		id = GetMenuItemID(hMenu, i);
+		if (id >= IDM_ZOOM1 && id <= IDM_ZOOMMAX) {
+		    f = 1;
+		    if (id >= rmvID) {
+			DeleteMenu(hMenu, id, MF_BYCOMMAND);
+		    }
+		}
+	    }
+	}
+	if (f) CheckMenuRadioItem(hMenu, IDM_ZOOM1, IDM_ZOOMMAX, IDM_ZOOM1 + expansion, MF_BYCOMMAND);
+}
+void removeZoomMenu(HWND hwnd) {
+	HMENU hMenu, hSubMenu;
+	HDC hdcScr;
+	RECT r;
+	int desktop_width, desktop_height;
+	int window_width, window_height;
+	int frame_width, frame_height;
+	int i, z;
+
+	hdcScr = GetDC(NULL);
+	desktop_width  = GetDeviceCaps(hdcScr, HORZRES);
+	desktop_height = GetDeviceCaps(hdcScr, VERTRES);
+
+	GetWindowRect(hwnd, &r);
+	frame_width  = r.right  - r.left - 320;
+	frame_height = r.bottom - r.top  - 200;
+
+	for (z=0; ; z++) {
+	    expansion = z;
+	    window_width = getYOKO()  + frame_width;
+	    window_height = getTATE() + frame_height;
+	    if (window_width  > desktop_width ||
+		window_height > desktop_height) break;
+	}
+	expansion = 1;
+
+	hMenu = GetMenu(hwnd);
+	removeZoomMenuSub(hMenu, IDM_ZOOM1 + z);
+}
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     PSTR szCmdLine, int iCmdShow){
@@ -1298,7 +1424,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             hInstance,					/* インスタンスのハンドル */
             NULL);					/* 作成時の引数保存用ポインタ */
 
+	removeZoomMenu(hwnd);
+
 	hAccel = LoadAccelerators(hInst, "myAccel");
+
+	YOKO = getYOKO();
+	TATE = getTATE();
+	CPALX = getCPALX();
 
 	if (!undoInit()) return 0;
 	createBackBuffer(hwnd, YOKO, TATE+640, &bkbuf);
@@ -1430,12 +1562,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		} else {
 		    /* alpha blending */
 		    BLENDFUNCTION bf;
+		    int w, h;
 		    bf.BlendOp = AC_SRC_OVER;
 		    bf.BlendFlags = 0;
 		    bf.AlphaFormat = 0;
 		    bf.SourceConstantAlpha = 128;
+		    w = 320 * (expansion+1);
+		    h = 200 * (expansion+1);
 		    BitBlt(ovbkbuf.hdcMem,0,0,bkbuf.w,TATE,bkbuf.hdcMem,0,0,SRCCOPY);
-		    AlphaBlend(ovbkbuf.hdcMem,MAINX,MAINY,640,400,ovbkbuf.hdcMem,0,TATE,640,400,bf);
+		    AlphaBlend(ovbkbuf.hdcMem,MAINX,MAINY,w,h,ovbkbuf.hdcMem,0,TATE,w,h,bf);
 		    BitBlt(hdc,0,tbHeight,bkbuf.w,TATE+tbHeight,ovbkbuf.hdcMem,0,0,SRCCOPY);
 		}
 		/* chr palette cursor */
@@ -1455,6 +1590,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		EndPaint(hwnd,&ps);
 		return 0;
 	    }
+
+	    case WM_SIZE:
+		SendMessage(hToolbar, WM_SIZE, wParam, lParam);
+		break;
 
 	    case WM_DESTROY:
 		DeleteObject(cursorbrush);
@@ -1630,7 +1769,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			    }
 			    showgrid = savegrid;
 			    send_bitmap_to_clipboard(hwnd, bkbuf.hdcMem,
-				(selx2-selx1+1)*(8 << expansion), (sely2-sely1+1)*(8 << expansion));
+				(selx2-selx1+1)*(8*(expansion+1)), (sely2-sely1+1)*(8*(expansion+1)));
 			    if (floater) {
 				refresh_floater();
 				updatescratcharea(hwnd);
@@ -1795,14 +1934,28 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 			vram2disp(hwnd);
 			return 0;
 
-		    case IDM_EXPAND: {
+		    case IDM_EXPAND:
+		    case IDM_ZOOM1:
+		    case IDM_ZOOM2:
+		    case IDM_ZOOM3:
+		    case IDM_ZOOM4:
+		    case IDM_ZOOM5:
+		    case IDM_ZOOM6: {
 			RECT r;
-			expansion ^= 1;
-			CheckMenuItem(GetMenu(hwnd), IDM_EXPAND, expansion ? MF_CHECKED : MF_UNCHECKED);
-			drawframe();
+			UINT id;
+			id = LOWORD(wParam);
+			if (id == IDM_EXPAND) {
+			    expansion = (expansion) ? 0 : zoomratio;
+			    id = IDM_ZOOM1 + expansion;
+			} else {
+			    expansion = id - IDM_ZOOM1;
+			    if (expansion) zoomratio = expansion;
+			}
+			CheckMenuRadioItem(GetMenu(hwnd), IDM_ZOOM1, IDM_ZOOMMAX, id, MF_BYCOMMAND);
+			refreshBackBuffer(hwnd);
 			r.left   = r.top = 0;
-			r.right  = (expansion) ? YOKO : YOKO0;
-			r.bottom = (expansion) ? TATE : TATE0;
+			r.right  = YOKO;
+			r.bottom = TATE;
 			r.bottom += tbHeight;
 			AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & (~WS_THICKFRAME), TRUE/*menu*/);
 			SetWindowPos(hwnd, 0, 0, 0, r.right - r.left, r.bottom - r.top,

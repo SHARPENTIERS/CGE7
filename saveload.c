@@ -4,6 +4,7 @@
 #include <windows.h>
 #include "CGE7.h"
 
+extern int TATE;
 extern int chr[1000];
 extern int atr[1000];
 extern int floaterchr[1000];
