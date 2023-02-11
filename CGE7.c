@@ -1,6 +1,7 @@
 #define OEMRESOURCE
 #include <windows.h>
 #include <commctrl.h>
+#include <shlwapi.h>
 #include "CGE7.h"
 #include "cpal.h"
 
@@ -18,6 +19,8 @@ HBRUSH cursorbrush;
 #define ATTR(f,b,a)	(((a)<<7)|((f)<<4)|(b))
 
 #define KEY_PRESSED 0x80
+
+#define bkbufPtr(x,y) ((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y))*(bkbuf.w)*4 + (x)*4])
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -53,6 +56,12 @@ extern int openTextInputDialog(HINSTANCE, HWND);
 
 extern void openAnimDialog(HWND, int);
 extern int isAnimDlgOpen(void);
+
+extern void load_config();
+extern void save_config();
+
+int add_recent_file(char *);
+char *get_recent_file(int);
 
 extern LPBITMAPINFO loadBMPfile(char *);
 LPBITMAPINFO ovBMP;
@@ -301,16 +310,19 @@ int is_onselection(int x, int y) {
 
 /*---------------------------------------------------------------------------*/
 void drawchr_m(int x, int y, int chr, int attr) {
-	int i,j,k,l;
+	int i,j,k,l,w;
+	int yy;
 	unsigned char c, *cgr, m;
 	DWORD fc, bc, *p1;
+	w = 8 * (expansion+1);
 	cgr = &cgrom[((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
+	yy = y;
 	for (i=0; i<8; i++) {
 	    m = *cgr++;
 	    for (k=0; k<expansion+1; k++) {
-		p1 = (DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-y)*(bkbuf.w)*4 + x*4];
+		p1 = (DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-yy)*(bkbuf.w)*4 + x*4];
 		c = m;
 		for (j=0; j<8; j++) {
 		    if (c & 0x80) {
@@ -320,20 +332,26 @@ void drawchr_m(int x, int y, int chr, int attr) {
 		    }
 		    c <<= 1;
 		}
-		y++;
+		yy++;
 	    }
 	}
-	if (showgrid && x < CPALX)
-	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-8*(expansion+1)))*(bkbuf.w)*4 + x*4]) = gridcolor;
+	if (showgrid && x < CPALX) {
+	    *bkbufPtr(x, y) = gridcolor;
+	    for (i=0; i<=expansion; i++) {
+		*bkbufPtr(x+1+i,   y) = gridcolor;  // top left
+		*bkbufPtr(x+w-1-i, y) = gridcolor;  // top right
+		*bkbufPtr(x, y+1+i  ) = gridcolor;  // left top
+		*bkbufPtr(x, y+w-1-i) = gridcolor;  // left bottom
+	    }
+	}
 	if (showdispc00 && !chr) {
-	    l = 8 * (expansion+1);
-	    for (i=l; i; i--) {
-		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   i))*(bkbuf.w)*4 + (x    )*4]) = gridcolor;
-		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   i))*(bkbuf.w)*4 + (x+l-1)*4]) = gridcolor;
-		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   1))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
-		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   l))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
-		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-   i))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
-		*((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-l-1+i))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
+	    for (i=0; i<w; i++) {
+		*bkbufPtr(x,     y+i) = gridcolor;  // left
+		*bkbufPtr(x+w-1, y+i) = gridcolor;  // right
+		*bkbufPtr(x+i,   y  ) = gridcolor;  // top
+		*bkbufPtr(x+i, y+w-1) = gridcolor;  // bottom
+		*bkbufPtr(x+i, y+i  ) = gridcolor;  // backslash
+		*bkbufPtr(x+w-1-i, y+i) = gridcolor;  // slash
 	    }
 	}
 }
@@ -428,28 +446,46 @@ void pset(int x, int y, int c, int a) {
 }
 
 void drawgrid(void) {
-	int i, j, x, y, w;
-	DWORD *p;
+	int i, j, k, x, y, w;
+	DWORD c;
 	w = 8 * (expansion+1);
+	c = showgrid ? gridcolor : 0;
 	if (showgrid) {
-	    for (i=0; i<=25; i++) {
-		vramxy2winxy(0, i, &x, &y);
-		p = (DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-y)*(bkbuf.w)*4 + x*4];
-		for (j=0; j<=40; j++) {
-		    *p = gridcolor;
-		    p += w;
+	    for (i=0; i<=24; i++) {
+		for (j=0; j<=39; j++) {
+		    vramxy2winxy(j, i, &x, &y);
+		    *bkbufPtr(x, y) = gridcolor;
+		    for (k=0; k<=expansion; k++) {
+			*bkbufPtr(x+1+k,   y) = gridcolor;  // top left
+			*bkbufPtr(x+w-1-k, y) = gridcolor;  // top right
+			*bkbufPtr(x, y+1+k  ) = gridcolor;  // left top
+			*bkbufPtr(x, y+w-1-k) = gridcolor;  // left bottom
+		    }
 		}
 	    }
-	} else {
-	    for (i=0; i<=25; i++) {
-		vramxy2winxy(40, i, &x, &y);
-		*(DWORD *)(&bkbuf.lpBMP[(bkbuf.h-1-y)*(bkbuf.w)*4 + x*4]) = 0;
-	    }
-	    for (j=0; j<40; j++) {
-		vramxy2winxy(j, 25, &x, &y);
-		*(DWORD *)(&bkbuf.lpBMP[(bkbuf.h-1-y)*(bkbuf.w)*4 + x*4]) = 0;
+	}
+	for (i=0; i<25; i++) {
+	    vramxy2winxy(40, i, &x, &y);
+	    *bkbufPtr(x, y) = c;
+	    if (expansion) {
+		for (k=0; k<=expansion; k++) {
+		    *bkbufPtr(x, y+1+k  ) = c;  // left top
+		    *bkbufPtr(x, y+w-1-k) = c;  // left bottom
+		}
 	    }
 	}
+	for (j=0; j<40; j++) {
+	    vramxy2winxy(j, 25, &x, &y);
+	    *bkbufPtr(x, y) = c;
+	    if (expansion) {
+		for (k=0; k<=expansion; k++) {
+		    *bkbufPtr(x+1+k,   y) = c;  // top left
+		    *bkbufPtr(x+w-1-k, y) = c;  // top right
+		}
+	    }
+	}
+	vramxy2winxy(40, 25, &x, &y);
+	*bkbufPtr(x, y) = c;
 }
 
 void drawchrpalette(void) {
@@ -507,7 +543,7 @@ void drawframe(void) {
 	/* main scratch area */
 	SelectObject(hdc, GetStockObject(BLACK_BRUSH));
 	SelectObject(hdc, GetStockObject(BLACK_PEN));
-	RoundRect(hdc, MAINX-3, MAINY-3, MAINX+(320*(expansion+1))+3, MAINY+(200*(expansion+1))+3, 8, 8);
+	RoundRect(hdc, MAINX-3, MAINY-3, MAINX+(320*(expansion+1))+4, MAINY+(200*(expansion+1))+4, 8, 8);
 	drawgrid();
 	/* character selection area */
 	drawchrpalette();
@@ -1078,6 +1114,17 @@ void shift_sg_in_floater(int dir) {
 	if (doland) land_floater();
 }
 
+void getPastePos(int w, int h, int *x, int *y) {
+	int dx, dy;
+	dx = lastvx - w/2; dy = lastvy - h/2;
+	if (dx < 0) dx = 0;
+	if (dy < 0) dy = 0;
+	if (dx+w > 40) dx = 40-w;
+	if (dy+h > 25) dy = 25-h;
+	*x = dx;
+	*y = dy;
+}
+
 /*----------------------------------------------------------------------
 	undo/redo
  ----------------------------------------------------------------------*/
@@ -1140,14 +1187,42 @@ void setwtitle(HWND hWnd, int editflag) {
 	SetWindowText(hWnd, titlebuf);
 }
 
-int OpenMyFile(HWND hWnd)
+int OpenMyFileSub(HWND hWnd, char *fn)
 {
 	int r;
 	DWORD dwSize = 0L;
-	OPENFILENAME ofn;
 	HANDLE hFile;
 	DWORD dwAccBytes;
 	char *filebuf;
+
+	hFile = CreateFile(fn, GENERIC_READ, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	dwSize = GetFileSize(hFile, NULL);
+	filebuf = malloc(dwSize+1);
+	SetFilePointer(hFile, 0, 0, FILE_BEGIN);
+
+	ReadFile(hFile, filebuf, dwSize, &dwAccBytes, NULL);
+	filebuf[dwAccBytes] = '\0';
+	CloseHandle(hFile);
+
+	lastflag = -1; /* ウィンドウタイトルを強制アップデート */
+	switch (fformat) {
+	    case 1:
+		undoFlush();
+		load_CGEdit(filebuf);
+		vram2disp(hWnd);
+		break;
+	    default:
+		break;
+	}
+	free(filebuf);
+//	setwtitle(hWnd, 0);	/* done by undoFlush() */
+
+	add_recent_file(fn);
+	return r;
+}
+int OpenMyFile(HWND hWnd)
+{
+	OPENFILENAME ofn;
 
 	memset(&ofn, 0, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
@@ -1163,30 +1238,9 @@ int OpenMyFile(HWND hWnd)
 
 	if(GetOpenFileName(&ofn) == 0)
 	    return 0;
-
-	hFile = CreateFile(szFileName, GENERIC_READ, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-	dwSize = GetFileSize(hFile, NULL);
-	filebuf = malloc(dwSize+1);
-	SetFilePointer(hFile, 0, 0, FILE_BEGIN);
-
-	ReadFile(hFile, filebuf, dwSize, &dwAccBytes, NULL);
-	filebuf[dwAccBytes] = '\0';
-	CloseHandle(hFile);
-
 	fformat = ofn.nFilterIndex;
-	lastflag = -1; /* ウィンドウタイトルを強制アップデート */
-	switch (fformat) {
-	    case 1:
-		undoFlush();
-		load_CGEdit(filebuf);
-		vram2disp(hWnd);
-		break;
-	    default:
-		break;
-	}
-	free(filebuf);
-//	setwtitle(hWnd, 0);	/* done by undoFlush() */
-	return r;
+
+	return OpenMyFileSub(hWnd, szFileName);
 }
 
 int WriteMyFile(HWND hWnd, int nodlg)
@@ -1352,6 +1406,7 @@ void removeZoomMenu(HWND hwnd) {
 	int desktop_width, desktop_height;
 	int window_width, window_height;
 	int frame_width, frame_height;
+	int expsav;
 	int i, z;
 
 	hdcScr = GetDC(NULL);
@@ -1362,6 +1417,8 @@ void removeZoomMenu(HWND hwnd) {
 	frame_width  = r.right  - r.left - 320;
 	frame_height = r.bottom - r.top  - 200;
 
+	expsav = expansion;
+
 	for (z=0; ; z++) {
 	    expansion = z;
 	    window_width = getYOKO()  + frame_width;
@@ -1369,7 +1426,7 @@ void removeZoomMenu(HWND hwnd) {
 	    if (window_width  > desktop_width ||
 		window_height > desktop_height) break;
 	}
-	expansion = 1;
+	expansion = expsav;
 
 	hMenu = GetMenu(hwnd);
 	removeZoomMenuSub(hMenu, IDM_ZOOM1 + z);
@@ -1388,6 +1445,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	hInst = hInstance;
 
 	InitCommonControls();
+
+	load_config();
 
 	eufont_ok = loadmzfont("mz700fon.eu", 0);
 	if (!loadmzfont("mz700fon.dat", 1)) {
@@ -1428,14 +1487,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	hAccel = LoadAccelerators(hInst, "myAccel");
 
-	YOKO = getYOKO();
-	TATE = getTATE();
-	CPALX = getCPALX();
-
 	if (!undoInit()) return 0;
-	createBackBuffer(hwnd, YOKO, TATE+640, &bkbuf);
-	createBackBuffer(hwnd, YOKO, TATE+640, &ovbkbuf);
-	drawframe();
+
+	refreshBackBuffer(hwnd);
+	vram2disp(hwnd);
 
 	make_toolbar(hwnd);
 	GetWindowRect(hToolbar, &r);
@@ -1469,6 +1524,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	undoTini();
 
 	if (ovBMP != NULL) GlobalFree(ovBMP);
+
+	save_config();
 
 	return msg.wParam;
 }
@@ -1535,10 +1592,36 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		case IDM_SG_DOWN:
 		    EnableMenuItem(hMenu, id, (selection || floater) ? MF_ENABLED : MF_GRAYED);
 		    break;
+		case IDM_RECENT_NONE:
+		case IDM_RECENT_1:
+		case IDM_RECENT_2:
+		case IDM_RECENT_3:
+		case IDM_RECENT_4:
+		case IDM_RECENT_5:
+		case IDM_RECENT_6:
+		case IDM_RECENT_7:
+		case IDM_RECENT_8:
+		case IDM_RECENT_9: {
+		    char *rfn;
+		    int i;
+		    for (pos = cnt-1; pos >= 0; pos--) DeleteMenu(hMenu, pos, MF_BYPOSITION);
+		    rfn = get_recent_file(0);
+		    if (rfn == NULL) {
+			AppendMenu(hMenu, MF_GRAYED, IDM_RECENT_NONE, "(なし)");
+		    } else for (i=0; rfn != NULL; rfn = get_recent_file(++i)) {
+			AppendMenu(hMenu, 0, IDM_RECENT_1 + i, get_recent_file(i));
+		    }
+		    return;
+		}
 		default:
 		    break;
 	    }
 	}
+}
+
+void initmenucheck(HMENU hMenu) {
+	CheckMenuItem(hMenu, IDM_GRID,      showgrid    ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(hMenu, IDM_SHOWSPACE, showdispc00 ? MF_CHECKED : MF_UNCHECKED);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1550,6 +1633,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 	switch (iMsg) {
 
 	    case WM_CREATE:
+		initmenucheck(GetMenu(hwnd));
 		cursorbrush = CreateSolidBrush(RGB(0xff, 0x80, 0x00));
 		ShowWindow(hwnd, SW_SHOW);
 		return 0;
@@ -1747,7 +1831,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			i = receive_from_clipboard(hwnd, &w, &h);
 			if (i) {
 			    int dx, dy;
-			    dx = (w!=40); dy = (h!=25);
+			    getPastePos(w, h, &dx, &dy);
 			    show_selection(dx, dy, w+dx-1, h+dy-1);
 			    floater = 1;
 			    refresh_floater();
@@ -2060,7 +2144,20 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			}
 			return 0;
 		    }
-
+		    case IDM_RECENT_1:
+		    case IDM_RECENT_2:
+		    case IDM_RECENT_3:
+		    case IDM_RECENT_4:
+		    case IDM_RECENT_5:
+		    case IDM_RECENT_6:
+		    case IDM_RECENT_7:
+		    case IDM_RECENT_8:
+		    case IDM_RECENT_9:
+			if (!isDisposalOK()) return 0;
+			strcpy(szFile, PathFindFileName(get_recent_file(LOWORD(wParam) - IDM_RECENT_1)));
+			fformat = 1;
+			OpenMyFileSub(hwnd, get_recent_file(LOWORD(wParam) - IDM_RECENT_1));
+			return 0;
 
 		    case IDM_END:
 			SendMessage(hwnd, WM_CLOSE, 0, 0L);

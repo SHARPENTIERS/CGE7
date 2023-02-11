@@ -28,6 +28,17 @@
 #define	IDM_END		1004
 #define	IDM_LOADBMP	1005
 
+#define IDM_RECENT_NONE 1010
+#define IDM_RECENT_1    1011
+#define IDM_RECENT_2    1012
+#define IDM_RECENT_3    1013
+#define IDM_RECENT_4    1014
+#define IDM_RECENT_5    1015
+#define IDM_RECENT_6    1016
+#define IDM_RECENT_7    1017
+#define IDM_RECENT_8    1018
+#define IDM_RECENT_9    1019
+
 #define	IDM_UNDO	1020
 #define	IDM_CUT		1021
 #define	IDM_COPY	1022
@@ -71,7 +82,9 @@
 #define	IDM_ZOOM4	1103
 #define	IDM_ZOOM5	1104
 #define	IDM_ZOOM6	1105
-#define	IDM_ZOOMMAX	IDM_ZOOM6
+#define	IDM_ZOOM7	1106
+#define	IDM_ZOOM8	1107
+#define	IDM_ZOOMMAX	IDM_ZOOM8
 
 #define	IDM_ABOUT	1999
 

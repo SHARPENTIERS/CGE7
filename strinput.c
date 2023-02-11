@@ -157,6 +157,7 @@ LRESULT CALLBACK StrInputDlgProc(HWND hDlgWnd, UINT msg, WPARAM wp, LPARAM lp)
 	    if (tategaki)
 		SendMessage(GetDlgItem(hDlgWnd, IDC_CHECK_TATE), BM_SETCHECK, (WPARAM)1, 0L);
 	    SetWindowText(GetDlgItem(hDlgWnd, IDC_EDIT_TEXT), buf);
+	    SendMessage(GetDlgItem(hDlgWnd, IDC_EDIT_TEXT), EM_SETSEL, 0, -1);
 	    SetWinCenter(hDlgWnd);
 	    SetFocus(GetDlgItem(hDlgWnd, IDC_EDIT_TEXT));
             return FALSE;

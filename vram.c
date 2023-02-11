@@ -51,6 +51,7 @@ void createBackBuffer(HWND hWnd, int w, int h, myBackBuf *bkbuf) {
 }
 
 void destroyBackBuffer(myBackBuf *bkbuf) {
+	if (bkbuf == NULL) return;
 	DeleteDC(bkbuf->hdcMem);
 	DeleteObject(bkbuf->hBMP);
 	bkbuf->hBMP   = 0;

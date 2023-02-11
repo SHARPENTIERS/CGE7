@@ -10,6 +10,9 @@ extern int atr[1000];
 extern int floaterchr[1000];
 extern int floateratr[1000];
 
+int RecentFileIndex[9] = { -1,-1, -1, -1, -1, -1, -1, -1, -1 };
+char RecentFiles[9][MAX_PATH];
+
 /*----------------------------------------------------------------------
 	CGEdit format
  ----------------------------------------------------------------------*/
@@ -395,4 +398,46 @@ LPBITMAPINFO loadBMPfile(char *fn) {
 xit:
 	CloseHandle(fh);
 	return (LPBITMAPINFO)lpBuf;
+}
+
+/*----------------------------------------------------------------------
+	Recent Used Files
+ ----------------------------------------------------------------------*/
+int add_recent_file(char *fn) {
+	int i, j, k;
+	if (fn == NULL || fn[0] == 0) return 0;
+	for (i=0; i<9; i++) {
+	    if (!strcmpi(&RecentFiles[i][0], fn)) {
+		// すでにリスト中にあるファイルを先頭にする
+		for (j=0; j<9; j++) {
+		    if (RecentFileIndex[j] == i) {
+			for (k=j; k>0; k--) RecentFileIndex[k] = RecentFileIndex[k-1];
+			RecentFileIndex[0] = i;
+			return 1;
+		    }
+		}
+		return 0;
+	    }
+	}
+	// リストの先頭にファイル名を追加する
+	j = RecentFileIndex[8];
+	if (j >= 0) RecentFiles[j][0] = 0; // 最後尾のファイル名を削除
+	for (k=8; k>0; k--) RecentFileIndex[k] = RecentFileIndex[k-1];
+	// 空きエントリを探す
+	for (i=0; i<9; i++) {
+	    if (RecentFiles[i][0] == 0) {
+		strcpy(&RecentFiles[i][0], fn);
+		RecentFileIndex[0] = i;
+		return 1;
+	    }
+	}
+	return 0;
+}
+
+char *get_recent_file(int i) {
+	int j;
+	if (i < 0 || i >= 9) return NULL;
+	j = RecentFileIndex[i];
+	if (j < 0) return NULL;
+	return &RecentFiles[j][0];
 }

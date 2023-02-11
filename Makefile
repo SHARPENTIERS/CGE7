@@ -6,10 +6,10 @@ THREAD = SINGLE
 all: CGE7.exe
 
 OBJFILES = CGE7.obj vram.obj cpal.obj saveload.obj undobuf.obj \
-	   strinput.obj anim.obj
+	   strinput.obj anim.obj config.obj
 RESFILES = CGE7.res
-LIBFILES = MSIMG32.LIB
-#LIBFILES = WININET.LIB SHLWAPI.LIB USER32.LIB
+LIBFILES = MSIMG32.LIB SHLWAPI.LIB
+#LIBFILES = WININET.LIB USER32.LIB
 
 CGE7.obj: CGE7.c CGE7.h cpal.h
 
