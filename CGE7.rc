@@ -20,7 +20,7 @@ CGE7Menu MENU DISCARDABLE
 	MENUITEM "オーバーレイBMP読み込み",	IDM_LOADBMP
 //	MENUITEM "Test",			IDM_TEST
 	MENUITEM SEPARATOR
-	POPUP    "最近使ったファイル"
+	POPUP    "最近使ったファイル(&F)"
 	{
 	    MENUITEM "(なし)",			IDM_RECENT_NONE, GRAYED
 	}
@@ -36,12 +36,13 @@ CGE7Menu MENU DISCARDABLE
         MENUITEM "コピー\aCtrl+C",		IDM_COPY,	GRAYED
         MENUITEM "貼り付け\aCtrl+V",		IDM_PASTE,	GRAYED
         MENUITEM "画像でコピー",		IDM_BITMAPCOPY,	GRAYED
+        MENUITEM "マーク箇所は透明",		IDM_MARKISTP
 	MENUITEM SEPARATOR
         MENUITEM "全てを選択\aCtrl+A",		IDM_SELALL
 	MENUITEM SEPARATOR
         MENUITEM "塗りつぶし",			IDM_FILL,	GRAYED
         MENUITEM "左右反転",			IDM_HREVERSE,	GRAYED
-        MENUITEM "文字列入力",			IDM_STRINPUT
+        MENUITEM "文字列入力...",		IDM_STRINPUT
     }
     POPUP "表示(&V)"
     {
@@ -59,8 +60,9 @@ CGE7Menu MENU DISCARDABLE
 	}
 //      MENUITEM "拡大表示\aCtrl+E",		IDM_EXPAND,	CHECKED
         MENUITEM "アニメーション枠表示",	IDM_ANIMFRAME,	CHECKED
-        MENUITEM "オーバーレイ表示",		IDM_OVERLAY,	CHECKED
-        MENUITEM "空白をマーク\aF11",		IDM_SHOWSPACE
+        MENUITEM "オーバーレイ表示",		IDM_OVERLAY
+        MENUITEM "アトリビュートのBit3をマーク\aF9",		IDM_SHOWBIT3
+        MENUITEM "ディスプレイコード00hをマーク\aF11",		IDM_SHOWSPACE
 	MENUITEM SEPARATOR
         MENUITEM "補助パレット\aSPACE",		IDM_ALTPAL
     }

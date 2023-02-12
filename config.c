@@ -9,7 +9,10 @@ char INIFilePath[MAX_PATH];
 extern int showgrid;
 extern int expansion;
 extern int zoomratio;
+extern int showbit3;
 extern int showdispc00;
+extern int mark_is_tp;
+
 extern int RecentFileIndex[9];
 extern char RecentFiles[9][MAX_PATH];
 
@@ -22,7 +25,9 @@ struct {
 	{ "ShowGrid",	&showgrid,	1,	NULL },
 	{ "Zoom",	&expansion,	1,	NULL },
 	{ "ZoomRatio",	&zoomratio,	1,	NULL },
+	{ "MarkBit3",	&showbit3,	0,	NULL },
 	{ "MarkDispc0",	&showdispc00,	0,	NULL },
+	{ "MarkIsTransparent",&mark_is_tp, 0,	NULL },
 	{ NULL,		NULL,		0,	NULL }
 };
 

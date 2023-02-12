@@ -83,10 +83,13 @@ int showgrid = 1;
 int expansion = 1;
 int zoomratio = 1;
 int showanimframe = 1;
-int showoverlay = 1;
+int showoverlay = 0;
 int showdispc00 = 0;
+int showbit3 = 0;
+int mark_is_tp = 0;
 
 int semigrapen = 0;
+int bit3pen = 0;
 
 int selection = 0;
 int selx1, sely1;
@@ -113,6 +116,7 @@ extern int hrev[256];
 AnimBox animsel[9];
 
 DWORD gridcolor;
+DWORD bit3color;
 
 HFONT fmini;
 
@@ -128,6 +132,7 @@ TBBUTTON tbb[] = {
 	{0,  IDTBB_CURSOR,   TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
 	{1,  IDTBB_PENCIL,   TBSTATE_ENABLED|TBSTATE_CHECKED, TBSTYLE_CHECKGROUP, 0, 0 },
 	{2,  IDTBB_PAINT,    TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
+	{21, IDTBB_BIT3,     TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
 	{0,  0,		     TBSTATE_ENABLED,		      TBSTYLE_SEP,        0, 0 },
 	{3,  IDTBB_SAVE,     TBSTATE_ENABLED,		      TBSTYLE_BUTTON,     0, 0 },
 	{0,  0,		     TBSTATE_ENABLED,		      TBSTYLE_SEP,        0, 0 },
@@ -153,8 +158,8 @@ TBBUTTON tb = {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0};
 
 void make_toolbar(HWND hwnd) {
 	hToolbar = CreateToolbarEx(hwnd, WS_CHILD|WS_VISIBLE, ID_TOOLBAR,
-				   21, hInst, ID_TOOLBARBMP, tbb,
-				   23, 0, 0, 16, 15, sizeof(TBBUTTON));
+				   22, hInst, ID_TOOLBARBMP, tbb,
+				   24, 0, 0, 16, 15, sizeof(TBBUTTON));
 	forecolor = 7;	/* white */
 	backcolor = 1;	/* blue */
 }
@@ -189,7 +194,7 @@ HFONT getfont(char *name, int size) {
 /*---------------------------------------------------------------------------*/
 int getYOKO() {
 	if (expansion == 0) {
-	    return (8+320+10+(16*8+15*2)+8);
+	    return (8+320+10+(16*8+15*2)+8) + 20;
 	}
 	return (8+(320*(expansion+1))+10+((16*8+15)*(expansion+1))+8);
 }
@@ -315,7 +320,7 @@ void drawchr_m(int x, int y, int chr, int attr) {
 	unsigned char c, *cgr, m;
 	DWORD fc, bc, *p1;
 	w = 8 * (expansion+1);
-	cgr = &cgrom[((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	yy = y;
@@ -354,12 +359,22 @@ void drawchr_m(int x, int y, int chr, int attr) {
 		*bkbufPtr(x+w-1-i, y+i) = gridcolor;  // slash
 	    }
 	}
+	if (showbit3 && (attr & 0x08)) {
+	    for (i=0; i<w; i++) {
+		*bkbufPtr(x,     y+i) = bit3color;  // left
+		*bkbufPtr(x+w-1, y+i) = bit3color;  // right
+		*bkbufPtr(x+i,   y  ) = bit3color;  // top
+		*bkbufPtr(x+i, y+w-1) = bit3color;  // bottom
+		*bkbufPtr(x+i, y+i  ) = bit3color;  // backslash
+		*bkbufPtr(x+w-1-i, y+i) = bit3color;  // slash
+	    }
+	}
 }
 void drawchr_e(int x, int y, int chr, int attr) {
 	int i,j;
 	unsigned char c, *cgr;
 	DWORD fc, bc, *p1, *p2;
-	cgr = &cgrom[((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	for (i=0; i<8; i++) {
@@ -397,7 +412,7 @@ void drawchr_n(int x, int y, int chr, int attr) {
 	int i,j;
 	unsigned char c, *cgr;
 	DWORD fc, bc, *p;
-	cgr = &cgrom[((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	for (i=0; i<8; i++) {
@@ -418,6 +433,14 @@ void drawchr_n(int x, int y, int chr, int attr) {
 	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  8))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
 	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  i))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
 	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-9+i))*(bkbuf.w)*4 + (x+i-1)*4]) = gridcolor;
+	}
+	if (showbit3 && (attr & 0x08)) for (i=8; i; i--) {
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  i))*(bkbuf.w)*4 + (x    )*4]) = bit3color;
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  i))*(bkbuf.w)*4 + (x+7  )*4]) = bit3color;
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  1))*(bkbuf.w)*4 + (x+i-1)*4]) = bit3color;
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  8))*(bkbuf.w)*4 + (x+i-1)*4]) = bit3color;
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-  i))*(bkbuf.w)*4 + (x+i-1)*4]) = bit3color;
+	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-9+i))*(bkbuf.w)*4 + (x+i-1)*4]) = bit3color;
 	}
 }
 void drawchr(int x, int y, int chr, int attr) {
@@ -957,8 +980,11 @@ void land_floater(void) {
 	for (i = y1; i <= y2; i++) {
 	    l = i*40 + x1;
 	    for (j = x1; j <= x2; j++) {
-//if (((floateratr[l] & 0x70) >> 4) != (floateratr[l] & 0x07))
-		pset(selx1+j, sely1+i, floaterchr[l], floateratr[l]);
+		if (!mark_is_tp ||
+		    !(showbit3 && (floateratr[l] & 0x08) ||
+		      showdispc00 && (floaterchr[l] == 0))) {
+		    pset(selx1+j, sely1+i, floaterchr[l], floateratr[l]);
+		}
 		l++;
 	    }
 	}
@@ -974,6 +1000,31 @@ void refresh_floater(void) {
 		drawchr(FLOATERX+j*8*(expansion+1),
 			FLOATERY+i*8*(expansion+1),
 			floaterchr[l], floateratr[l]);
+		l++;
+	    }
+	}
+}
+void blend_floater(void) {
+	int x1, y1, x2, y2;
+	int i, j, k, l;
+	if (!selection || !floater) return;
+	x1 = (selx1 < 0) ? -selx1 : 0;
+	y1 = (sely1 < 0) ? -sely1 : 0;
+	x2 = ((selx2 > 39) ? 39 : selx2) - selx1;
+	y2 = ((sely2 > 24) ? 24 : sely2) - sely1;
+	if (x2 > 39) x2 = 39;
+	if (y2 > 24) y2 = 24;
+	for (i = y1; i <= y2; i++) {
+	    k = selx1+x1 + (sely1+i)*40;
+	    l = x1 + i*40;
+	    for (j = x1; j <= x2; j++) {
+		if (showbit3 && (floateratr[l] & 0x08) ||
+		    showdispc00 && floaterchr[l] == 0) {
+		    drawchr(FLOATERX+j*8*(expansion+1),
+			    FLOATERY+i*8*(expansion+1),
+			    chr[k], atr[k]);
+		}
+		k++;
 		l++;
 	    }
 	}
@@ -1282,6 +1333,7 @@ int WriteMyFile(HWND hWnd, int nodlg)
 	    if (!nodlg) setwtitle(hWnd, 0); /* undoResetModifiedFlag() ‚ªŒÄ‚ñ‚Å‚­‚ê‚È‚¢‚Æ‚«—p */
 	}
 
+	add_recent_file(szFileName);
 	return 1;
 }
 
@@ -1448,6 +1500,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	load_config();
 
+	bit3color = RGB(0xCC, 0x00, 0xCC);
+
 	eufont_ok = loadmzfont("mz700fon.eu", 0);
 	if (!loadmzfont("mz700fon.dat", 1)) {
 	    MessageBox(NULL, (LPCSTR)"MZ700FON.DAT‚ªŒ©‚Â‚©‚è‚Ü‚¹‚ñ", (LPCSTR)"Error", MB_OK);
@@ -1553,6 +1607,9 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		case IDM_REDO:
 		    EnableMenuItem(hMenu, id, undoCanRedo() ? MF_ENABLED : MF_GRAYED);
 		    break;
+		case IDM_SHOWBIT3:
+		    CheckMenuItem(hMenu, id, showbit3 ? MF_CHECKED : MF_UNCHECKED);
+		    break;
 		case IDM_ANIM1:
 		case IDM_ANIM2:
 		case IDM_ANIM3:
@@ -1603,13 +1660,15 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		case IDM_RECENT_8:
 		case IDM_RECENT_9: {
 		    char *rfn;
+		    char buf[MAX_PATH+4];
 		    int i;
 		    for (pos = cnt-1; pos >= 0; pos--) DeleteMenu(hMenu, pos, MF_BYPOSITION);
 		    rfn = get_recent_file(0);
 		    if (rfn == NULL) {
 			AppendMenu(hMenu, MF_GRAYED, IDM_RECENT_NONE, "(‚È‚µ)");
 		    } else for (i=0; rfn != NULL; rfn = get_recent_file(++i)) {
-			AppendMenu(hMenu, 0, IDM_RECENT_1 + i, get_recent_file(i));
+			wsprintf(buf, "&%d: %s", i+1, rfn);
+			AppendMenu(hMenu, 0, IDM_RECENT_1 + i, buf);
 		    }
 		    return;
 		}
@@ -1622,6 +1681,7 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 void initmenucheck(HMENU hMenu) {
 	CheckMenuItem(hMenu, IDM_GRID,      showgrid    ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, IDM_SHOWSPACE, showdispc00 ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(hMenu, IDM_MARKISTP,  mark_is_tp  ? MF_CHECKED : MF_UNCHECKED);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1662,6 +1722,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		/* selection band */
 		draw_selection(hdc);
 		/* floater */
+		if (mark_is_tp && floater && (showbit3 || showdispc00)) blend_floater();
 		draw_floater(hdc);
 		/* animation frames */
 		if (showanimframe) {
@@ -1720,6 +1781,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		    goto sel_paint;
 		} else if (c == ' ') {
 		    goto palswap;
+		} else if (c == '9') {
+		    SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_BIT3, TRUE);
+		    goto sel_bit3pen;
 		}
 	    }
 
@@ -1777,12 +1841,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			chrpos = (chrpos & 0x0ff0) | (((chrpos & 0x000f) + 1) & 0x000f);
 			updatechrpalette(hwnd);
 			return 0;
+//		    case VK_F9:
+//			if (!eufont_ok) return 0;
+//			cspalno ^= 2;
+//			drawchrpalette();
+//			updatechrpalette(hwnd);
+//			return 0;
 		    case VK_F9:
-			if (!eufont_ok) return 0;
-			cspalno ^= 2;
-			drawchrpalette();
-			updatechrpalette(hwnd);
-			return 0;
+			goto showbit3swap;
 		    case VK_F11:
 			goto dispc00swap;
 		    default:
@@ -1973,6 +2039,18 @@ sel_paint:		currtool = IDTBB_PAINT;
 			currcursor = 0;
 			return 0;
 
+		    case IDTBB_BIT3:
+sel_bit3pen:		currtool = IDTBB_BIT3;
+			bit3pen = 1;
+			land_floater();
+			hide_selection();
+			currcursor = 0;
+			if (showbit3 == 0) {
+			    showbit3 = 1;
+			    vram2disp(hwnd);
+			}
+			return 0;
+
 		    case IDTBB_SAVE:
 			goto savefile;
 
@@ -2071,7 +2149,25 @@ ovswap:			showoverlay ^= 1;
 		    case IDM_SHOWSPACE:
 dispc00swap:		showdispc00 ^= 1;
 			CheckMenuItem(GetMenu(hwnd), IDM_SHOWSPACE, showdispc00 ? MF_CHECKED : MF_UNCHECKED);
+			if (mark_is_tp && floater && !showdispc00) refresh_floater();
 			vram2disp(hwnd);
+			return 0;
+
+		    case IDM_SHOWBIT3:
+showbit3swap:		showbit3 ^= 1;
+			if (mark_is_tp && floater && !showbit3) refresh_floater();
+			vram2disp(hwnd);
+			if (!showbit3 && currtool == IDTBB_BIT3) {
+			    SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_PENCIL, TRUE);
+			    goto sel_pencil;
+			}
+			return 0;
+
+		    case IDM_MARKISTP:
+			mark_is_tp ^= 1;
+			CheckMenuItem(GetMenu(hwnd), IDM_MARKISTP, mark_is_tp ? MF_CHECKED : MF_UNCHECKED);
+			if (mark_is_tp == 0 && floater) refresh_floater();
+			updatescratcharea(hwnd);
 			return 0;
 
 		    case IDM_ANIM1:
@@ -2182,6 +2278,7 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			int i, c, a;
 			i = y*40+x;
 			get_chr_attr(&c, &a);
+			a |= atr[i] & 0x08;
 			if (semigrapen) {
 			    int sx, sy, sr, m;
 			    winxy2sgxy(cx, cy, &sx, &sy);
@@ -2191,14 +2288,11 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			    else    c = (chr[i] | 0xF0) & ~m;
 			    semigrapen = (semigrapen & 1) | (sr << 1);
 			}
-			if (wParam & MK_SHIFT)
+			if (wParam & MK_SHIFT) {
 			    c = chr[i];
-			else
-			if (wParam & MK_CONTROL)
+			    a = (a & 0x7F) | (atr[i] & 0x80);
+			} else if (wParam & MK_CONTROL) {
 			    a = atr[i];
-			else {
-			    if (wParam & MK_SHIFT)
-				a = (a & 0x77) | (atr[i] & 0x88);
 			}
 			undoStartEntry();
 			pset(x, y, c, a);
@@ -2239,6 +2333,26 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			} else
 			    seedfill(x, y, c, a);
 			updatescratcharea(hwnd);
+		    }
+		} else if (currtool == IDTBB_BIT3) {
+		    if (winxy2vramxy(cx, cy, &x, &y)) {
+			int i, c, a;
+			i = y*40+x;
+			c = chr[i];
+			a = atr[i];
+			if (!(a & 0x08)) {
+			    bit3pen = 3;
+			    a |= 0x08;
+			} else {
+			    bit3pen = 1;
+			    a &= ~0x08;
+			}
+			undoStartEntry();
+			pset(x, y, c, a);
+			updatescratcharea(hwnd);
+			lastvx = x;
+			lastvy = y;
+			dragmode = 1;
 		    }
 		}
 		break;
@@ -2291,6 +2405,7 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			int i, c, a;
 			i = y*40+x;
 			get_chr_attr(&c, &a);
+			a |= atr[i] & 0x08;
 			if (semigrapen) {
 			    int sx, sy, sr, m;
 			    winxy2sgxy(cx, cy, &sx, &sy);
@@ -2299,14 +2414,13 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			    if (sr) c =  chr[i] | 0xF0  |  m;
 			    else    c = (chr[i] | 0xF0) & ~m;
 			}
-			if (dragmode == 3)
+			if (dragmode == 3) {
 			    c = chr[i];
-			else
-			if (dragmode == 2)
+			    a = (a & 0x7f) | (atr[i] & 0x80);
+			} else if (dragmode == 2) {
 			    a = atr[i];
-			else {
-			    if (wParam & MK_SHIFT)
-				a = (a & 0x7f) | (atr[i] & 0x80);
+			} else if (wParam & MK_SHIFT) {
+			    a = (a & 0x7f) | (atr[i] & 0x80);
 			}
 			pset(x, y, c, a);
 			updatescratcharea(hwnd);
@@ -2365,6 +2479,15 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 		    }
 		    lastvx = x;
 		    lastvy = y;
+		} else if (currtool == IDTBB_BIT3 && (wParam & MK_LBUTTON) && dragmode) {
+			int i, c, a;
+			i = y*40+x;
+			c = chr[i];
+			a = atr[i];
+			if (bit3pen & 0x02) a |= 0x08;
+			else a &= ~0x08;
+			pset(x, y, c, a);
+			updatescratcharea(hwnd);
 		}
 		break;
 	    }

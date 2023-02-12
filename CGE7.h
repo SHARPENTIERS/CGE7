@@ -1,7 +1,7 @@
 #ifndef __CGE7_H__
 #define __CGE7_H__
 
-#define VERSTRING	"0.16"
+#define VERSTRING	"0.17"
 
 //#define YOKO	(8+640+10+(16*16+15*2)+8)
 //#define TATE	(8+400+8)
@@ -50,6 +50,7 @@
 #define IDM_BITMAPCOPY	1028
 #define IDM_HREVERSE	1029
 #define IDM_VREVERSE	1030
+#define IDM_MARKISTP	1031
 
 #define	IDM_GRID	1040
 #define	IDM_EXPAND	1041
@@ -57,6 +58,7 @@
 #define	IDM_ANIMFRAME	1043
 #define	IDM_OVERLAY	1044
 #define IDM_SHOWSPACE	1045
+#define IDM_SHOWBIT3	1046
 
 #define	IDM_DO_ANIM	1060
 #define	IDM_ANIM1	1061
@@ -111,6 +113,7 @@
 #define IDTBB_SWAP	2018
 #define IDTBB_PAINT	2019
 #define IDTBB_SAVE	2020
+#define IDTBB_BIT3	2021
 
 #define CPAL_REVERSE	0x00000200
 #define CPAL_PRCOLOR	0x00000400
