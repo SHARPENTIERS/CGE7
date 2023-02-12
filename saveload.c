@@ -434,6 +434,27 @@ int add_recent_file(char *fn) {
 	return 0;
 }
 
+int del_recent_file(char *fn) {
+	int i, j, k;
+	if (fn == NULL || fn[0] == 0) return 0;
+	for (i=0; i<9; i++) {
+	    if (!strcmpi(&RecentFiles[i][0], fn)) {
+		// リスト中にあるファイル名を削除する
+		RecentFiles[i][0] = 0;
+		for (j=0; j<9; j++) {
+		    if (RecentFileIndex[j] == i) {
+			for (k=j; k<9-1; k++) {
+			    RecentFileIndex[k] = RecentFileIndex[k+1];
+			}
+			RecentFileIndex[8] = -1;
+			return 1;
+		    }
+		}
+	    }
+	}
+	return 0;
+}
+
 char *get_recent_file(int i) {
 	int j;
 	if (i < 0 || i >= 9) return NULL;

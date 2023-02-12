@@ -61,6 +61,7 @@ extern void load_config();
 extern void save_config();
 
 int add_recent_file(char *);
+int del_recent_file(char *);
 char *get_recent_file(int);
 
 extern LPBITMAPINFO loadBMPfile(char *);
@@ -1240,13 +1241,23 @@ void setwtitle(HWND hWnd, int editflag) {
 
 int OpenMyFileSub(HWND hWnd, char *fn)
 {
-	int r;
 	DWORD dwSize = 0L;
 	HANDLE hFile;
 	DWORD dwAccBytes;
 	char *filebuf;
+	char buf[256 + MAX_PATH];
 
-	hFile = CreateFile(fn, GENERIC_READ, 0, 0, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	hFile = CreateFile(fn, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) {
+	    wsprintf(buf, "%s が開けません", fn);
+	    MessageBox(hWnd, buf, "CGE7: Error", MB_OK);
+	    del_recent_file(fn);
+	    szFile[0] = 0;
+	    szFileName[0] = 0;
+	    lastflag = -1; /* ウィンドウタイトルを強制アップデート */
+	    setwtitle(hWnd, 0);
+	    return 0;
+	}
 	dwSize = GetFileSize(hFile, NULL);
 	filebuf = malloc(dwSize+1);
 	SetFilePointer(hFile, 0, 0, FILE_BEGIN);
@@ -1269,7 +1280,7 @@ int OpenMyFileSub(HWND hWnd, char *fn)
 //	setwtitle(hWnd, 0);	/* done by undoFlush() */
 
 	add_recent_file(fn);
-	return r;
+	return 1;
 }
 int OpenMyFile(HWND hWnd)
 {
@@ -2248,12 +2259,19 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 		    case IDM_RECENT_6:
 		    case IDM_RECENT_7:
 		    case IDM_RECENT_8:
-		    case IDM_RECENT_9:
+		    case IDM_RECENT_9: {
+			char *fn;
 			if (!isDisposalOK()) return 0;
-			strcpy(szFile, PathFindFileName(get_recent_file(LOWORD(wParam) - IDM_RECENT_1)));
+			fn = get_recent_file(LOWORD(wParam) - IDM_RECENT_1);
+			if (fn == NULL) {
+			    MessageBox(hwnd, "Cannot find recent filename???", "Error", MB_OK);
+			    return 0;
+			}
+			strcpy(szFile, PathFindFileName(fn));
 			fformat = 1;
-			OpenMyFileSub(hwnd, get_recent_file(LOWORD(wParam) - IDM_RECENT_1));
+			OpenMyFileSub(hwnd, fn);
 			return 0;
+		    }
 
 		    case IDM_END:
 			SendMessage(hwnd, WM_CLOSE, 0, 0L);
