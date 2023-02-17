@@ -12,6 +12,7 @@ extern int zoomratio;
 extern int showbit3;
 extern int showdispc00;
 extern int mark_is_tp;
+extern int showstatusbar;
 
 extern int RecentFileIndex[9];
 extern char RecentFiles[9][MAX_PATH];
@@ -28,6 +29,7 @@ struct {
 	{ "MarkBit3",	&showbit3,	0,	NULL },
 	{ "MarkDispc0",	&showdispc00,	0,	NULL },
 	{ "MarkIsTransparent",&mark_is_tp, 0,	NULL },
+	{ "ShowStatusBar",&showstatusbar, 0,	NULL },
 	{ NULL,		NULL,		0,	NULL }
 };
 

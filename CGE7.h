@@ -1,7 +1,7 @@
 #ifndef __CGE7_H__
 #define __CGE7_H__
 
-#define VERSTRING	"0.17"
+#define VERSTRING	"0.19"
 
 //#define YOKO	(8+640+10+(16*16+15*2)+8)
 //#define TATE	(8+400+8)
@@ -59,6 +59,7 @@
 #define	IDM_OVERLAY	1044
 #define IDM_SHOWSPACE	1045
 #define IDM_SHOWBIT3	1046
+#define IDM_STATUSBAR	1047
 
 #define	IDM_DO_ANIM	1060
 #define	IDM_ANIM1	1061
@@ -125,6 +126,8 @@
 #define IDC_CHECK_TATE	5002
 
 #define	IDD_ANIM	5050
+
+#define ID_STATUSBAR	6000
 
 typedef struct myBackBufTag {
 	HBITMAP	hBMP;	/* DIBSection */

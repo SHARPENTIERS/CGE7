@@ -88,6 +88,7 @@ int showoverlay = 0;
 int showdispc00 = 0;
 int showbit3 = 0;
 int mark_is_tp = 0;
+int showstatusbar = 0;
 
 int semigrapen = 0;
 int bit3pen = 0;
@@ -125,7 +126,9 @@ myBackBuf ovbkbuf;
 
 static char *wintitle = "MZ-700 Character Graphics Editor";
 
-/*---------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------
+	tool bar
+ ----------------------------------------------------------------------*/
 HWND hToolbar;
 int tbHeight;
 
@@ -163,6 +166,36 @@ void make_toolbar(HWND hwnd) {
 				   24, 0, 0, 16, 15, sizeof(TBBUTTON));
 	forecolor = 7;	/* white */
 	backcolor = 1;	/* blue */
+}
+
+/*----------------------------------------------------------------------
+	status bar
+ ----------------------------------------------------------------------*/
+static HWND hStatusWnd = NULL;
+int sbHeight;
+
+HWND CreateMyStatusbar(HWND hWnd) {
+
+	int sb_size[] = {80, 200, -1};
+
+	hStatusWnd = CreateWindowEx(
+	        0, /*拡張スタイル*/
+	        STATUSCLASSNAME, /*ウィンドウクラス*/
+	        NULL, /*タイトル*/
+	        WS_CHILD, /*ウィンドウスタイル*/
+	        0, 0, /*位置*/
+	        0, 0, /*幅、高さ*/
+	        hWnd, /*親ウィンドウ*/
+	        (HMENU)ID_STATUSBAR, /*ウィンドウのＩＤ*/
+	        hInst, /*インスタンスハンドル*/
+	        NULL);
+	SendMessage(hStatusWnd, SB_SETPARTS, (WPARAM)3, (LPARAM)(LPINT)sb_size);
+	ShowWindow(hStatusWnd, SW_SHOW);
+	return hStatusWnd;
+}
+
+void setStatusBarStr(int i, char *str) {
+	SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)i | 0, (LPARAM)str);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1270,7 +1303,16 @@ int OpenMyFileSub(HWND hWnd, char *fn)
 	switch (fformat) {
 	    case 1:
 		undoFlush();
-		load_CGEdit(filebuf);
+		if (!load_CGEdit(filebuf)) {
+		    MessageBox(hWnd, "CGEDITフォーマットではありません", "CGE7: Error", MB_OK);
+		    free(filebuf);
+		    del_recent_file(fn);
+		    szFile[0] = 0;
+		    szFileName[0] = 0;
+		    lastflag = -1; /* ウィンドウタイトルを強制アップデート */
+		    setwtitle(hWnd, 0);
+		    return 0;
+		}
 		vram2disp(hWnd);
 		break;
 	    default:
@@ -1561,9 +1603,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	GetWindowRect(hToolbar, &r);
 	tbHeight = r.bottom - r.top;
 
+	CreateMyStatusbar(hwnd);
+	GetWindowRect(hStatusWnd, &r);
+	sbHeight = r.bottom - r.top;
+	ShowWindow(hStatusWnd, showstatusbar ? SW_SHOW : SW_HIDE);
+
 	r.left   = r.top = 0;
 	r.right  = YOKO;
 	r.bottom = TATE + tbHeight;
+	if (showstatusbar) r.bottom += sbHeight;
 	AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & (~WS_THICKFRAME), TRUE/*menu*/);
 	SetWindowPos(hwnd, 0, 0, 0, r.right - r.left, r.bottom - r.top,
 		     SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER/*|SWP_NOREDRAW*/);
@@ -1693,6 +1741,7 @@ void initmenucheck(HMENU hMenu) {
 	CheckMenuItem(hMenu, IDM_GRID,      showgrid    ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, IDM_SHOWSPACE, showdispc00 ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, IDM_MARKISTP,  mark_is_tp  ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuItem(hMenu, IDM_STATUSBAR, showstatusbar ? MF_CHECKED : MF_UNCHECKED);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -1707,6 +1756,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 		initmenucheck(GetMenu(hwnd));
 		cursorbrush = CreateSolidBrush(RGB(0xff, 0x80, 0x00));
 		ShowWindow(hwnd, SW_SHOW);
+		DragAcceptFiles(hwnd, TRUE);
 		return 0;
 
 	    case WM_PAINT: {
@@ -1749,6 +1799,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 
 	    case WM_SIZE:
 		SendMessage(hToolbar, WM_SIZE, wParam, lParam);
+		SendMessage(hStatusWnd, WM_SIZE, wParam, lParam);
 		break;
 
 	    case WM_DESTROY:
@@ -2130,11 +2181,29 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 			r.right  = YOKO;
 			r.bottom = TATE;
 			r.bottom += tbHeight;
+			if (showstatusbar) r.bottom += sbHeight;
 			AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & (~WS_THICKFRAME), TRUE/*menu*/);
 			SetWindowPos(hwnd, 0, 0, 0, r.right - r.left, r.bottom - r.top,
 				     SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER/*|SWP_NOREDRAW*/);
 			if (floater) refresh_floater();
 			vram2disp(hwnd);
+			return 0;
+		    }
+
+		    case IDM_STATUSBAR: {
+			RECT r;
+			UINT id;
+			showstatusbar ^= 1;
+			CheckMenuItem(GetMenu(hwnd), IDM_STATUSBAR, showstatusbar ? MF_CHECKED : MF_UNCHECKED);
+			ShowWindow(hStatusWnd, showstatusbar ? SW_SHOW : SW_HIDE);
+			r.left   = r.top = 0;
+			r.right  = YOKO;
+			r.bottom = TATE;
+			r.bottom += tbHeight;
+			if (showstatusbar) r.bottom += sbHeight;
+			AdjustWindowRect(&r, WS_OVERLAPPEDWINDOW & (~WS_THICKFRAME), TRUE/*menu*/);
+			SetWindowPos(hwnd, 0, 0, 0, r.right - r.left, r.bottom - r.top,
+				     SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER/*|SWP_NOREDRAW*/);
 			return 0;
 		    }
 
@@ -2413,6 +2482,7 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 
 	    case WM_MOUSEMOVE: {
 		int cx, cy, x, y, i, j;
+		char buf[256];
 		cx = LOWORD(lParam);
 		cy = HIWORD(lParam) - tbHeight;
 		i = is_onselection(cx, cy);
@@ -2494,6 +2564,14 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 				show_selection(selx1+j, sely1+i, selx2+j, sely2+i);
 				break;
 			}
+			wsprintf(buf, "[%2d, %2d]", selx2-selx1+1, sely2-sely1+1);
+			setStatusBarStr(0, buf);
+		    }
+		    if (showstatusbar && !(wParam & MK_LBUTTON) && (lastvx != x || lastvy != y)) {
+			wsprintf(buf, "(%2d, %2d)", x, y);
+			setStatusBarStr(0, buf);
+			wsprintf(buf, "Chr:%02Xh Attr:%02Xh", chr[y*40+x], atr[y*40+x]);
+			setStatusBarStr(1, buf);
 		    }
 		    lastvx = x;
 		    lastvy = y;
@@ -2518,6 +2596,16 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 
 	    case WM_INITMENUPOPUP:
 		treatmenu(hwnd, (HMENU)wParam);
+		break;
+
+	    case WM_DROPFILES:
+		DragQueryFile((HDROP)wParam, 0, szFileName, MAX_PATH);
+		if (isDisposalOK()) {
+		    strcpy(szFile, PathFindFileName(szFileName));
+		    fformat = 1;
+		    OpenMyFileSub(hwnd, szFileName);
+		}
+		DragFinish((HDROP)wParam);
 		break;
 
 	    default:

@@ -47,20 +47,21 @@ CGE7Menu MENU DISCARDABLE
     POPUP "表示(&V)"
     {
         MENUITEM "グリッド表示\aCtrl+G",	IDM_GRID,	CHECKED
-	POPUP    "拡大表示"
+	POPUP    "拡大表示(&Z)"
 	{
-	    MENUITEM "x1",			IDM_ZOOM1
-	    MENUITEM "x2",			IDM_ZOOM2
-	    MENUITEM "x3",			IDM_ZOOM3
-	    MENUITEM "x4",			IDM_ZOOM4
-	    MENUITEM "x5",			IDM_ZOOM5
-	    MENUITEM "x6",			IDM_ZOOM6
-	    MENUITEM "x7",			IDM_ZOOM7
-	    MENUITEM "x8",			IDM_ZOOM8
+	    MENUITEM "x&1",			IDM_ZOOM1
+	    MENUITEM "x&2",			IDM_ZOOM2
+	    MENUITEM "x&3",			IDM_ZOOM3
+	    MENUITEM "x&4",			IDM_ZOOM4
+	    MENUITEM "x&5",			IDM_ZOOM5
+	    MENUITEM "x&6",			IDM_ZOOM6
+	    MENUITEM "x&7",			IDM_ZOOM7
+	    MENUITEM "x&8",			IDM_ZOOM8
 	}
 //      MENUITEM "拡大表示\aCtrl+E",		IDM_EXPAND,	CHECKED
         MENUITEM "アニメーション枠表示",	IDM_ANIMFRAME,	CHECKED
         MENUITEM "オーバーレイ表示",		IDM_OVERLAY
+        MENUITEM "ステータスバー表示",		IDM_STATUSBAR
         MENUITEM "アトリビュートのBit3をマーク\aF9",		IDM_SHOWBIT3
         MENUITEM "ディスプレイコード00hをマーク\aF11",		IDM_SHOWSPACE
 	MENUITEM SEPARATOR
