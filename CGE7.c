@@ -73,6 +73,7 @@ int backcolor = 1;
 int chrpos = 0x70;
 int cspalno = 0;
 int eufont_ok = 0;
+int lastchrpos = -1;
 
 int lastflag = 0;
 
@@ -297,8 +298,8 @@ int winxy2palindex(int gx, int gy) {
 	} else {
 	    w = 9*(expansion+1);
 	}
-	if (gx >= (x-1) && gx < (x+w*16) &&
-	    gy >= (y-1) && gy < (y+w*22)) {
+	if (gx >= (x-1) && gx < (x-1+w*16) &&
+	    gy >= (y-1) && gy < (y-1+w*22)) {
 		return (((gy - (y-1))/w) << 4) | ((gx - (x-1))/w);
 	}
 	return -1;
@@ -2487,6 +2488,23 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 		cy = HIWORD(lParam) - tbHeight;
 		i = is_onselection(cx, cy);
 		if (currtool == IDTBB_CURSOR && !(wParam & MK_LBUTTON)) currcursor = i;
+		if (showstatusbar && cx >= CPALX && !(wParam & MK_LBUTTON) &&
+		    (i = winxy2palindex(cx, cy)) >= 0) {
+		    if (lastchrpos != i) {
+			int c, a;
+			buf[0] = 0;
+			setStatusBarStr(0, buf);
+			j = chrpos; // save
+			chrpos = i;
+			get_chr_attr(&c, &a);
+			chrpos = j; // restore
+			wsprintf(buf, "Chr:%02Xh Attr:%02Xh", c, a);
+			setStatusBarStr(1, buf);
+			lastchrpos = i;
+			lastvx = lastvy = -1;
+		    }
+		    break;
+		}
 		if (winxy2vramxy2(cx, cy, &x, &y) &&
 		    (x != lastvx || y != lastvy || (semigrapen && currtool == IDTBB_PENCIL))) {
 		    if (currtool == IDTBB_PENCIL && (wParam & MK_LBUTTON) && dragmode) {
@@ -2567,11 +2585,14 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			wsprintf(buf, "[%2d, %2d]", selx2-selx1+1, sely2-sely1+1);
 			setStatusBarStr(0, buf);
 		    }
-		    if (showstatusbar && !(wParam & MK_LBUTTON) && (lastvx != x || lastvy != y)) {
-			wsprintf(buf, "(%2d, %2d)", x, y);
-			setStatusBarStr(0, buf);
-			wsprintf(buf, "Chr:%02Xh Attr:%02Xh", chr[y*40+x], atr[y*40+x]);
-			setStatusBarStr(1, buf);
+		    if (showstatusbar && !(wParam & MK_LBUTTON)) {
+			if ((lastvx != x || lastvy != y)) {
+			    wsprintf(buf, "(%2d, %2d)", x, y);
+			    setStatusBarStr(0, buf);
+			    wsprintf(buf, "Chr:%02Xh Attr:%02Xh", chr[y*40+x], atr[y*40+x]);
+			    setStatusBarStr(1, buf);
+			    lastchrpos = -1;
+			}
 		    }
 		    lastvx = x;
 		    lastvy = y;
