@@ -2337,9 +2337,10 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			    MessageBox(hwnd, "Cannot find recent filename???", "Error", MB_OK);
 			    return 0;
 			}
+			strcpy(szFileName, fn);
 			strcpy(szFile, PathFindFileName(fn));
 			fformat = 1;
-			OpenMyFileSub(hwnd, fn);
+			OpenMyFileSub(hwnd, szFileName);
 			return 0;
 		    }
 
