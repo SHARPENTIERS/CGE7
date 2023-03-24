@@ -203,6 +203,7 @@ void setStatusBarStr(int i, char *str) {
 int loadmzfont(char *fn, int normal) {
 	HANDLE *fp;
 	DWORD bytesread;
+
 	fp = CreateFile(fn, GENERIC_READ, FILE_SHARE_READ, NULL,
 			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fp == INVALID_HANDLE_VALUE) return 0;
@@ -1538,6 +1539,23 @@ void removeZoomMenu(HWND hwnd) {
 	removeZoomMenuSub(hMenu, IDM_ZOOM1 + z);
 }
 
+char *get1arg(char *str, char *buf, int bufsiz) {
+	char c;
+	while (isspace(*str)) str++; /* skip spaces */
+	if (!*str) return 0;
+	while ((c = *str) != 0 && !isspace(c) && --bufsiz) {
+	  str++;
+	  if (c == '\"') {
+	    while ((c = *str++) != 0 && c != '\"' && --bufsiz) *buf++ = c;
+	    if (!c || !bufsiz) return 0;
+	  } else
+	    *buf++ = c;
+	}
+	if (!bufsiz) return 0;
+	*buf = 0; /* EOS */
+	return str;
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     PSTR szCmdLine, int iCmdShow){
 
@@ -1547,16 +1565,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	HACCEL hAccel;
 	RECT r;
 	int i;
+	char path[MAX_PATH], *p;
 
 	hInst = hInstance;
 
 	InitCommonControls();
 
+	/* get args */
+	if (get1arg(szCmdLine, path, MAX_PATH)) {
+	    GetFullPathName(path, MAX_PATH, szFileName, &p);
+	    strcpy(szFile, p);
+	} else {
+	    szFileName[0] = 0;
+	}
+
+	/* Set current directory to the EXE file path */
+	if (GetModuleFileName(NULL, path, MAX_PATH)) {
+	    if (PathRemoveFileSpec(path)) {
+		SetCurrentDirectory(path);
+	    }
+	}
+
 	load_config();
 
 	bit3color = RGB(0xCC, 0x00, 0xCC);
 
-	eufont_ok = loadmzfont("mz700fon.eu", 0);
 	if (!loadmzfont("mz700fon.dat", 1)) {
 	    MessageBox(NULL, (LPCSTR)"MZ700FON.DATが見つかりません", (LPCSTR)"Error", MB_OK);
 	    return 0;
@@ -1618,6 +1651,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		     SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER/*|SWP_NOREDRAW*/);
 	SetWindowPos(hToolbar, 0, 0, 0, bkbuf.w, tbHeight,
 		     SWP_NOACTIVATE|SWP_NOMOVE|SWP_NOZORDER/*|SWP_NOREDRAW*/);
+
+	if (szFileName[0]) {
+	    fformat = 1;
+	    OpenMyFileSub(hwnd, szFileName);
+	}
 
 	ShowWindow(hwnd,iCmdShow);      /* ウインドウを表示 */
 	UpdateWindow(hwnd);
@@ -2499,7 +2537,7 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			chrpos = i;
 			get_chr_attr(&c, &a);
 			chrpos = j; // restore
-			wsprintf(buf, "Chr:%02Xh Attr:%02Xh", c, a);
+			wsprintf(buf, "Chr: %02X h  Attr: %02X h", c, a);
 			setStatusBarStr(1, buf);
 			lastchrpos = i;
 			lastvx = lastvy = -1;
@@ -2590,7 +2628,7 @@ savefile:		WriteMyFile(hwnd, !!szFileName[0]);
 			if ((lastvx != x || lastvy != y)) {
 			    wsprintf(buf, "(%2d, %2d)", x, y);
 			    setStatusBarStr(0, buf);
-			    wsprintf(buf, "Chr:%02Xh Attr:%02Xh", chr[y*40+x], atr[y*40+x]);
+			    wsprintf(buf, "Chr: %02X h  Attr: %02X h", chr[y*40+x], atr[y*40+x]);
 			    setStatusBarStr(1, buf);
 			    lastchrpos = -1;
 			}

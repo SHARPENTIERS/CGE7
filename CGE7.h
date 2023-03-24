@@ -1,7 +1,7 @@
 #ifndef __CGE7_H__
 #define __CGE7_H__
 
-#define VERSTRING	"0.19"
+#define VERSTRING	"0.20"
 
 //#define YOKO	(8+640+10+(16*16+15*2)+8)
 //#define TATE	(8+400+8)
@@ -126,6 +126,7 @@
 #define IDC_CHECK_TATE	5002
 
 #define	IDD_ANIM	5050
+#define IDC_SLIDER1     5051
 
 #define ID_STATUSBAR	6000
 

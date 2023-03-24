@@ -145,5 +145,7 @@ CAPTION "アニメーション"
 FONT 9, "ＭＳ Ｐゴシック"
 {
     DEFPUSHBUTTON   "閉じる",IDOK,80,80,40,14
+    CONTROL         "速度",IDC_SLIDER1,TRACKBAR_CLASS,
+		    WS_TABSTOP | TBS_BOTH | TBS_AUTOTICKS, 5,30,160,28
 }
 

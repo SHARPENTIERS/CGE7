@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <commctrl.h>
 #include "cge7.h"
 
 #define	ANIMTIMER_ID 99
@@ -9,47 +10,61 @@ extern DWORD colortable[];
 extern unsigned char cgrom[4096];
 extern int chr[1000];
 extern int atr[1000];
+extern int expansion;
 
 int dw, dh;
 int animdlg;
 int animindex;
+int duration;
 myBackBuf abk;
 
 void animdrawchr(int x, int y, int vx, int vy) {
-	int i, j, ch, at;
-	unsigned char c, *cgr;
-	DWORD fc, bc, *p;
+	int ch, at;
+	int i,j,k,l;
+	int yy;
+	unsigned char c, *cgr, m;
+	DWORD fc, bc, *p1;
 	ch = chr[vy*40+vx];
 	at = atr[vy*40+vx];
 	cgr = &cgrom[((at & 0x0080)<<4)+(ch<<3)];
 	fc = colortable[(at & 0x70) >> 4];
 	bc = colortable[(at & 0x07)     ];
+	yy = y;
 	for (i=0; i<8; i++) {
-	    c = *cgr++;
-	    p = (DWORD *)&abk.lpBMP[(abk.h-1-y)*(abk.w)*4 + x*4];
-	    for (j=0; j<8; j++) {
-		*p++ = (c & 0x80) ? fc : bc;
-		c <<= 1;
+	    m = *cgr++;
+	    for (k=0; k<expansion+1; k++) {
+		p1 = (DWORD *)&abk.lpBMP[(abk.h-1-yy)*(abk.w)*4 + x*4];
+		c = m;
+		for (j=0; j<8; j++) {
+		    if (c & 0x80) {
+			for (l=0; l<expansion+1; l++) *p1++ = fc;
+		    } else {
+			for (l=0; l<expansion+1; l++) *p1++ = bc;
+		    }
+		    c <<= 1;
+		}
+		yy++;
 	    }
-	    y++;
 	}
+
 }
 
 void CALLBACK do_anim(HWND hwnd, UINT msg, UINT idtimer, DWORD dwtime) {
 	HDC hdc;
 	RECT r;
-	int i, j;
+	int i, j, w;
 
+	w = 8 * (expansion + 1);
 	SetRect(&r, 0, 0, abk.w, abk.h);
 	FillRect(abk.hdcMem, &r, (HBRUSH)GetStockObject(BLACK_BRUSH));
 	for (i=0; i<(animsel[animindex].y2 - animsel[animindex].y1 + 1); i++) {
 	    for (j=0; j<(animsel[animindex].x2 - animsel[animindex].x1 + 1); j++) {
-		animdrawchr(j*8, i*8, animsel[animindex].x1 + j, animsel[animindex].y1 + i);
+		animdrawchr(j*w, i*w, animsel[animindex].x1 + j, animsel[animindex].y1 + i);
 	    }
 	}
 
 	hdc = GetDC(hwnd);
-	BitBlt(hdc, (dw-abk.w)/2, (dh-abk.h-40)/2, abk.w, abk.h, abk.hdcMem, 0, 0, SRCCOPY);
+	BitBlt(hdc, (dw-abk.w)/2, (dh-abk.h-40-48)/2, abk.w, abk.h, abk.hdcMem, 0, 0, SRCCOPY);
 	ReleaseDC(hwnd, hdc);
 
 	do {
@@ -62,19 +77,18 @@ void stop_anim(HWND hwnd) {
 }
 void start_anim(HWND hwnd) {
 	HDC hdc;
-	animindex = 0;
 	while (animsel[animindex].x1 < 0) {
 	    animindex++;
 	    if (animindex >= 9) animindex = 0;
 	}
 	do_anim(hwnd, 0, ANIMTIMER_ID, 0); /* first frame */
-	SetTimer(hwnd, ANIMTIMER_ID, 300, (TIMERPROC)do_anim);
+	SetTimer(hwnd, ANIMTIMER_ID, duration, (TIMERPROC)do_anim);
 }
 
 LRESULT CALLBACK AnimDlgProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam) {
-	HWND btn;
+	HWND btn, sld;
 	RECT r0, r1;
-	int x, y, w, h;
+	int x, y, w, h, pos;
 
 	switch (iMsg) {
 
@@ -97,6 +111,21 @@ LRESULT CALLBACK AnimDlgProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam) {
 		y = dh - 32;
 		MoveWindow(btn, x, y, w, h, TRUE);
 
+		/* スライダー移動 */
+		sld = GetDlgItem(hwnd, IDC_SLIDER1);
+		GetClientRect(sld, &r0);
+		w = dw - 16;
+		h = r0.bottom - r0.top;
+		x = (dw - w)/2;
+		y = dh - 32 - 48;
+		MoveWindow(sld, x, y, w, h, TRUE);
+		SendMessage(sld, TBM_SETRANGE, TRUE, MAKELPARAM(0, 100));
+		SendMessage(sld, TBM_SETTICFREQ, 10, 0);
+		SendMessage(sld, TBM_SETPOS, TRUE, 50);
+		SendMessage(sld, TBM_SETPAGESIZE, 0, 10);
+
+		animindex = 0;
+		duration = 192;
 		start_anim(hwnd);
 
 		break;
@@ -105,6 +134,19 @@ LRESULT CALLBACK AnimDlgProc(HWND hwnd,UINT iMsg,WPARAM wParam,LPARAM lParam) {
 		switch (LOWORD(wParam)) {
 		    case IDOK:
 			goto xit;
+		}
+		break;
+
+	    case WM_HSCROLL:
+		sld = GetDlgItem(hwnd, IDC_SLIDER1);
+		if (sld == (HWND)lParam) {
+		    pos = SendMessage(sld, TBM_GETPOS, NULL, NULL);
+		    pos = 32 * (pos / 10 + 1);
+		    if (pos != duration) {
+			duration = pos;
+			stop_anim(hwnd);
+			start_anim(hwnd);
+		    }
 		}
 		break;
 
@@ -131,14 +173,14 @@ void openAnimDialog(HWND hwMain, int flag) {
 	}
 	if (!maxw || !maxh) return;
 
-	dw = maxw * 8;
-	dh = maxh * 8;
+	dw = maxw * 8 * (expansion+1);
+	dh = maxh * 8 * (expansion+1);
 	createBackBuffer(hwMain, dw, dh, &abk);
 
 	dw += 48;
-	dh += 48;
+	dh += 48 + 48;
 	if (dw < 100) dw = 100;
-	if (dh <  80) dh =  80;
+	if (dh < 120) dh = 120;
 	CreateDialog(hInst, MAKEINTRESOURCE(IDD_ANIM), hwMain, (DLGPROC)AnimDlgProc);
 	animdlg = 1;
 }
