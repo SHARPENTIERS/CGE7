@@ -2343,9 +2343,13 @@ showbit3swap:		showbit3 ^= 1;
 			return 0;
 
 		    case IDM_SAVE:
-savefile:		WriteMyFile(hwnd, !!szFileName[0]);
+savefile:		land_floater();
+			hide_selection();
+			WriteMyFile(hwnd, !!szFileName[0]);
 			return 0;
 		    case IDM_SAVEAS:
+			land_floater();
+			hide_selection();
 			WriteMyFile(hwnd, 0);
 			return 0;
 		    case IDM_OPEN:
