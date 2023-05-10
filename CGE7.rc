@@ -42,11 +42,17 @@ CGE7Menu MENU DISCARDABLE
 	MENUITEM SEPARATOR
         MENUITEM "塗りつぶし",			IDM_FILL,	GRAYED
         MENUITEM "左右反転",			IDM_HREVERSE,	GRAYED
+        MENUITEM "上下反転",			IDM_VREVERSE,	GRAYED
         MENUITEM "文字列入力...",		IDM_STRINPUT
     }
     POPUP "表示(&V)"
     {
         MENUITEM "グリッド表示\aCtrl+G",	IDM_GRID,	CHECKED
+	POPUP    "グリッド形状"
+	{
+	    MENUITEM "・",			IDM_GRIDTYPE0,	CHECKED
+	    MENUITEM "＋",			IDM_GRIDTYPE1
+	}
 	POPUP    "拡大表示(&Z)"
 	{
 	    MENUITEM "x&1",			IDM_ZOOM1

@@ -90,6 +90,7 @@ int showdispc00 = 0;
 int showbit3 = 0;
 int mark_is_tp = 0;
 int showstatusbar = 0;
+int gridtype = 0;
 
 int semigrapen = 0;
 int bit3pen = 0;
@@ -115,6 +116,7 @@ extern DWORD colortable[];
 extern int cspal[CPAL_NUM * 4];
 
 extern int hrev[256];
+extern int vrev[256];
 
 AnimBox animsel[9];
 
@@ -378,11 +380,13 @@ void drawchr_m(int x, int y, int chr, int attr) {
 	}
 	if (showgrid && x < CPALX) {
 	    *bkbufPtr(x, y) = gridcolor;
-	    for (i=0; i<=expansion; i++) {
-		*bkbufPtr(x+1+i,   y) = gridcolor;  // top left
-		*bkbufPtr(x+w-1-i, y) = gridcolor;  // top right
-		*bkbufPtr(x, y+1+i  ) = gridcolor;  // left top
-		*bkbufPtr(x, y+w-1-i) = gridcolor;  // left bottom
+	    if (gridtype != 0) {
+		for (i=0; i<=expansion; i++) {
+		    *bkbufPtr(x+1+i,   y) = gridcolor;  // top left
+		    *bkbufPtr(x+w-1-i, y) = gridcolor;  // top right
+		    *bkbufPtr(x, y+1+i  ) = gridcolor;  // left top
+		    *bkbufPtr(x, y+w-1-i) = gridcolor;  // left bottom
+		}
 	    }
 	}
 	if (showdispc00 && !chr) {
@@ -514,11 +518,13 @@ void drawgrid(void) {
 		for (j=0; j<=39; j++) {
 		    vramxy2winxy(j, i, &x, &y);
 		    *bkbufPtr(x, y) = gridcolor;
-		    for (k=0; k<=expansion; k++) {
-			*bkbufPtr(x+1+k,   y) = gridcolor;  // top left
-			*bkbufPtr(x+w-1-k, y) = gridcolor;  // top right
-			*bkbufPtr(x, y+1+k  ) = gridcolor;  // left top
-			*bkbufPtr(x, y+w-1-k) = gridcolor;  // left bottom
+		    if (gridtype != 0) {
+			for (k=0; k<=expansion; k++) {
+			    *bkbufPtr(x+1+k,   y) = gridcolor;  // top left
+			    *bkbufPtr(x+w-1-k, y) = gridcolor;  // top right
+			    *bkbufPtr(x, y+1+k  ) = gridcolor;  // left top
+			    *bkbufPtr(x, y+w-1-k) = gridcolor;  // left bottom
+			}
 		    }
 		}
 	    }
@@ -526,7 +532,7 @@ void drawgrid(void) {
 	for (i=0; i<25; i++) {
 	    vramxy2winxy(40, i, &x, &y);
 	    *bkbufPtr(x, y) = c;
-	    if (expansion) {
+	    if (expansion && gridtype != 0) {
 		for (k=0; k<=expansion; k++) {
 		    *bkbufPtr(x, y+1+k  ) = c;  // left top
 		    *bkbufPtr(x, y+w-1-k) = c;  // left bottom
@@ -536,7 +542,7 @@ void drawgrid(void) {
 	for (j=0; j<40; j++) {
 	    vramxy2winxy(j, 25, &x, &y);
 	    *bkbufPtr(x, y) = c;
-	    if (expansion) {
+	    if (expansion && gridtype != 0) {
 		for (k=0; k<=expansion; k++) {
 		    *bkbufPtr(x+1+k,   y) = c;  // top left
 		    *bkbufPtr(x+w-1-k, y) = c;  // top right
@@ -1105,6 +1111,33 @@ void hrev_floater(void) {
 	    }
 	    if ((selx2-selx1+1) & 1)
 		floaterchr[l] = hrev[floaterchr[l]];
+	}
+	refresh_floater();
+}
+
+void vrev_floater(void) {
+	int i, j, k, l;
+	int c, a, lc, la, rc, ra;
+	if (!selection || !floater) return;
+	for (j = 0; j < (selx2-selx1+1); j++) {
+	    k = j;
+	    l = j + (sely2 - sely1)*40;
+	    for (i = 0; i < (sely2-sely1+1)/2; i++) {
+		lc = vrev[floaterchr[l]];
+		rc = vrev[floaterchr[k]];
+		la = floateratr[l];
+		ra = floateratr[k];
+		if (lc == 0xBD) la |= 0x80;
+		if (rc == 0xBD) ra |= 0x80;
+		floaterchr[l] = rc;
+		floaterchr[k] = lc;
+		floateratr[l] = ra;
+		floateratr[k] = la;
+		k += 40;
+		l -= 40;
+	    }
+	    if ((sely2-sely1+1) & 1)
+		floaterchr[l] = vrev[floaterchr[l]];
 	}
 	refresh_floater();
 }
@@ -1693,6 +1726,7 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		case IDM_CUT:
 		case IDM_FILL:
 		case IDM_HREVERSE:
+		case IDM_VREVERSE:
 		case IDM_BITMAPCOPY:
 		    EnableMenuItem(hMenu, id, (selection) ? MF_ENABLED : MF_GRAYED);
 		    break;
@@ -1781,6 +1815,7 @@ void initmenucheck(HMENU hMenu) {
 	CheckMenuItem(hMenu, IDM_SHOWSPACE, showdispc00 ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, IDM_MARKISTP,  mark_is_tp  ? MF_CHECKED : MF_UNCHECKED);
 	CheckMenuItem(hMenu, IDM_STATUSBAR, showstatusbar ? MF_CHECKED : MF_UNCHECKED);
+	CheckMenuRadioItem(hMenu, IDM_GRIDTYPE0, IDM_GRIDTYPE1, IDM_GRIDTYPE0 + gridtype, MF_BYCOMMAND);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -2084,6 +2119,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			}
 			return 0;
 
+		    case IDM_VREVERSE:
+			if (selection) {
+			    int doland;
+			    doland = 0;
+			    if (!floater) {
+				selection_to_floater();
+				doland = 1;
+			    }
+			    vrev_floater();
+			    if (doland) land_floater();
+			    updatescratcharea(hwnd);
+			}
+			return 0;
+
 		    case IDM_STRINPUT:
 			land_floater();
 			if (currtool != IDTBB_CURSOR) {
@@ -2196,6 +2245,18 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 			if (floater) refresh_floater();
 			vram2disp(hwnd);
 			return 0;
+
+		    case IDM_GRIDTYPE0:
+		    case IDM_GRIDTYPE1: {
+			UINT id;
+			id = LOWORD(wParam);
+			gridtype = id - IDM_GRIDTYPE0;
+			CheckMenuRadioItem(GetMenu(hwnd), IDM_GRIDTYPE0, IDM_GRIDTYPE1, id, MF_BYCOMMAND);
+			drawframe();
+			if (floater) refresh_floater();
+			vram2disp(hwnd);
+			return 0;
+		    }
 
 		    case IDM_EXPAND:
 		    case IDM_ZOOM1:
