@@ -150,8 +150,7 @@ int SetWinCenter(HWND hWnd)
 
 LRESULT CALLBACK StrInputDlgProc(HWND hDlgWnd, UINT msg, WPARAM wp, LPARAM lp)
 {
-    int i,j,k;
-    HWND ctrl;
+	int i;
     switch (msg) {
         case WM_INITDIALOG:
 	    if (tategaki)
@@ -238,7 +237,7 @@ int putmoji(int k) {
 	return 1;
 }
 
-int openTextInputDialog(HINSTANCE hInst, HWND hwnd) {
+void openTextInputDialog(HINSTANCE hInst, HWND hwnd) {
 	unsigned char c, *p;
 	int i, j, k;
 	if (DialogBox(hInst, MAKEINTRESOURCE(IDD_STRINPUT),

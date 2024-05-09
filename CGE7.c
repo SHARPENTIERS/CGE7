@@ -642,7 +642,6 @@ void updatescratcharea(HWND hwnd) {
 
 void vram2disp(HWND hwnd) {
 	int i, j, k;
-	int x, y;
 	k = 0;
 	for (i=0; i<25; i++) {
 	    for (j=0; j<40; j++) {
@@ -679,7 +678,6 @@ void draw_selection(HDC hdc) {
 	HBITMAP hbm;
 	HBRUSH	hbrush, hbrushOld;
 	BYTE bBits[16];
-	RECT r;
 	int i, m;
 	int x1, y1, x2, y2;
 	int sx1, sy1, sx2, sy2;
@@ -710,7 +708,7 @@ void draw_selection(HDC hdc) {
 	    }
 	    hbm = CreateBitmap(8, 8, 1, 1, (LPBYTE)bBits); 
 	    hbrush = CreatePatternBrush(hbm); 
-	    SelectObject(hdc, hbrush); 
+	    hbrushOld = SelectObject(hdc, hbrush); 
 	    PatBlt(hdc, x1-1, y1-1, 1, y2-y1+1, PATCOPY);
 	    SelectObject(hdc, hbrushOld); 
 	    DeleteObject(hbrush); 
@@ -727,7 +725,7 @@ void draw_selection(HDC hdc) {
 	    }
 	    hbm = CreateBitmap(8, 8, 1, 1, (LPBYTE)bBits); 
 	    hbrush = CreatePatternBrush(hbm); 
-	    SelectObject(hdc, hbrush); 
+	    hbrushOld = SelectObject(hdc, hbrush); 
 	    PatBlt(hdc, x2, y1, 1, y2-y1+1, PATCOPY);
 	    SelectObject(hdc, hbrushOld); 
 	    DeleteObject(hbrush); 
@@ -740,7 +738,7 @@ void draw_selection(HDC hdc) {
 	    for (i=0; i<16; i++) bBits[i] = m;
 	    hbm = CreateBitmap(8, 8, 1, 1, (LPBYTE)bBits); 
 	    hbrush = CreatePatternBrush(hbm); 
-	    SelectObject(hdc, hbrush); 
+	    hbrushOld = SelectObject(hdc, hbrush); 
 	    PatBlt(hdc, x1, y1-1, x2-x1+1, 1, PATCOPY);
 	    SelectObject(hdc, hbrushOld); 
 	    DeleteObject(hbrush); 
@@ -753,14 +751,14 @@ void draw_selection(HDC hdc) {
 	    for (i=0; i<16; i++) bBits[i] = m;
 	    hbm = CreateBitmap(8, 8, 1, 1, (LPBYTE)bBits); 
 	    hbrush = CreatePatternBrush(hbm); 
-	    SelectObject(hdc, hbrush); 
+	    hbrushOld = SelectObject(hdc, hbrush); 
 	    PatBlt(hdc, x1-1, y2, x2-x1+1, 1, PATCOPY);
 	    SelectObject(hdc, hbrushOld); 
 	    DeleteObject(hbrush); 
 	    DeleteObject(hbm); 
 	}
 
-	SelectObject(hdc, hbrushOld); 
+	//SelectObject(hdc, hbrushOld); 
 }
 
 void CALLBACK anim_selection(HWND hwnd, UINT msg, UINT idtimer, DWORD dwtime) {
@@ -822,7 +820,7 @@ void drawanimrect(HDC hdc, int x1, int y1, int x2, int y2, int num) {
 	SelectObject(hdc, fmini);
 	SetTextColor(hdc, RGB(0,0,0));
 	SetBkColor(hdc, RGB(0xff, 0x80, 0x00));
-	TextOut(hdc, gx1, gy1, buf, strlen(buf));
+	TextOut(hdc, gx1, gy1, buf, (int)strlen(buf));
 }
 
 /*----------------------------------------------------------------------
@@ -1033,8 +1031,7 @@ void land_floater(void) {
 	floater = 0;
 }
 void refresh_floater(void) {
-	int x1, y1, x2, y2;
-	int i, j, k, l;
+	int i, j, l;
 	if (!selection || !floater) return;
 	for (i = 0; i < (sely2-sely1+1); i++) {
 	    l = i*40;
@@ -1074,7 +1071,7 @@ void blend_floater(void) {
 
 void hrev_floater(void) {
 	int i, j, k, l;
-	int c, a, lc, la, rc, ra;
+	int lc, la, rc, ra;
 	if (!selection || !floater) return;
 	for (i = 0; i < (sely2-sely1+1); i++) {
 	    k = i*40 + selx2 - selx1;
@@ -1117,7 +1114,7 @@ void hrev_floater(void) {
 
 void vrev_floater(void) {
 	int i, j, k, l;
-	int c, a, lc, la, rc, ra;
+	int lc, la, rc, ra;
 	if (!selection || !floater) return;
 	for (j = 0; j < (selx2-selx1+1); j++) {
 	    k = j;
@@ -1278,14 +1275,14 @@ char szFile[MAX_PATH];
 char szFileName[MAX_PATH];
 int fformat;
 
-char *filtertxt = "CGEdit形式 テキスト(*.txt)\0*.txt\0All files(*.*)\0*.*\0\0";
+char *filtertxt = "CGEdit File(*.txt)\0*.txt\0All files(*.*)\0*.*\0\0";
 
 void setwtitle(HWND hWnd, int editflag) {
 	char titlebuf[80];
 	char *p;
 	int i;
 	p = szFile;
-	if (!*p) p = "無題";
+	if (!*p) p = "not saved yet";
 	for (i=0; i<73; i++) {
 	    if (!*p) break;
 	    titlebuf[i] = *p++;
@@ -1317,7 +1314,7 @@ int OpenMyFileSub(HWND hWnd, char *fn)
 
 	hFile = CreateFile(fn, GENERIC_READ, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile == INVALID_HANDLE_VALUE) {
-	    wsprintf(buf, "%s が開けません", fn);
+	    wsprintf(buf, "%s cannot be opened", fn);
 	    MessageBox(hWnd, buf, "CGE7: Error", MB_OK);
 	    del_recent_file(fn);
 	    szFile[0] = 0;
@@ -1339,7 +1336,7 @@ int OpenMyFileSub(HWND hWnd, char *fn)
 	    case 1:
 		undoFlush();
 		if (!load_CGEdit(filebuf)) {
-		    MessageBox(hWnd, "CGEDITフォーマットではありません", "CGE7: Error", MB_OK);
+		    MessageBox(hWnd, "Not in CGEDIT Format", "CGE7: Error", MB_OK);
 		    free(filebuf);
 		    del_recent_file(fn);
 		    szFile[0] = 0;
@@ -1457,21 +1454,18 @@ int OpenBMPFile(HWND hWnd)
 {
 	DWORD dwSize = 0L;
 	OPENFILENAME ofn;
-	HANDLE hFile;
-	DWORD dwAccBytes;
-	char *filebuf;
 
 	memset(&ofn, 0, sizeof(OPENFILENAME));
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = hWnd;
-	ofn.lpstrFilter = "BMPファイル(*.BMP)\0*.bmp\0\0";
+	ofn.lpstrFilter = "BMP file(*.BMP)\0*.bmp\0\0";
 	ofn.lpstrFile = szBMPFileName;
 	ofn.lpstrFileTitle = szBMPFile;
 	ofn.nMaxFile = MAX_PATH;
 	ofn.nMaxFileTitle = sizeof(szBMPFile);
 	ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
 	ofn.lpstrDefExt = "bmp";
-	ofn.lpstrTitle = "BMPファイルを開く";
+	ofn.lpstrTitle = "Open BMP Fileｭ";
 
 	if(GetOpenFileName(&ofn) == 0)
 	    return 0;
@@ -1498,7 +1492,7 @@ void updateWinTitle(int editflag) {
 int isDisposalOK(void) {
 	return (
 	    !undoIsModified() ||
-	    MessageBox(bkbuf.hWnd, "変更内容を破棄しますか？", "CGE7",
+	    MessageBox(bkbuf.hWnd, "Do you want to discard your changes?", "CGE7",
 		       MB_YESNO|MB_ICONQUESTION) == IDYES);
 }
 
@@ -1540,14 +1534,14 @@ void removeZoomMenuSub(HMENU hMenu, UINT rmvID) {
 	if (f) CheckMenuRadioItem(hMenu, IDM_ZOOM1, IDM_ZOOMMAX, IDM_ZOOM1 + expansion, MF_BYCOMMAND);
 }
 void removeZoomMenu(HWND hwnd) {
-	HMENU hMenu, hSubMenu;
+	HMENU hMenu;
 	HDC hdcScr;
 	RECT r;
 	int desktop_width, desktop_height;
 	int window_width, window_height;
 	int frame_width, frame_height;
 	int expsav;
-	int i, z;
+	int z;
 
 	hdcScr = GetDC(NULL);
 	desktop_width  = GetDeviceCaps(hdcScr, HORZRES);
@@ -1624,7 +1618,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	bit3color = RGB(0xCC, 0x00, 0xCC);
 
 	if (!loadmzfont("mz700fon.dat", 1)) {
-	    MessageBox(NULL, (LPCSTR)"MZ700FON.DATが見つかりません", (LPCSTR)"Error", MB_OK);
+	    MessageBox(NULL, (LPCSTR)"MZ700FON.DAT not found", (LPCSTR)"Error", MB_OK);
 	    return 0;
 	}
 
@@ -1759,10 +1753,10 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		    if (animsel[i].x1 < 0) {
 			f |= (selection && (selx1 >= 0) && (sely1 >= 0) &&
 				(selx2 < 40) && (sely2 < 25) && !isAnimDlgOpen()) ? MF_ENABLED : MF_GRAYED;
-			wsprintf(buf, "%d%s", i+1, "コマめに設定");
+			wsprintf(buf, "%d%s", i+1, "Set every frame");
 		    } else {
 			f |= !isAnimDlgOpen() ? MF_ENABLED : MF_GRAYED;
-			wsprintf(buf, "%d%s", i+1, "コマめをキャンセル");
+			wsprintf(buf, "%d%s", i+1, "Cancel frame");
 		    }
 		    ModifyMenu(hMenu, pos, f, id, buf);
 		    break;
@@ -1797,7 +1791,7 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		    for (pos = cnt-1; pos >= 0; pos--) DeleteMenu(hMenu, pos, MF_BYPOSITION);
 		    rfn = get_recent_file(0);
 		    if (rfn == NULL) {
-			AppendMenu(hMenu, MF_GRAYED, IDM_RECENT_NONE, "(なし)");
+			AppendMenu(hMenu, MF_GRAYED, IDM_RECENT_NONE, "(none)");
 		    } else for (i=0; rfn != NULL; rfn = get_recent_file(++i)) {
 			wsprintf(buf, "&%d: %s", i+1, rfn);
 			AppendMenu(hMenu, 0, IDM_RECENT_1 + i, buf);
@@ -2292,7 +2286,6 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 
 		    case IDM_STATUSBAR: {
 			RECT r;
-			UINT id;
 			showstatusbar ^= 1;
 			CheckMenuItem(GetMenu(hwnd), IDM_STATUSBAR, showstatusbar ? MF_CHECKED : MF_UNCHECKED);
 			ShowWindow(hStatusWnd, showstatusbar ? SW_SHOW : SW_HIDE);

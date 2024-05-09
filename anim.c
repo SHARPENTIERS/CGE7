@@ -76,7 +76,6 @@ void stop_anim(HWND hwnd) {
 	KillTimer(hwnd, ANIMTIMER_ID);
 }
 void start_anim(HWND hwnd) {
-	HDC hdc;
 	while (animsel[animindex].x1 < 0) {
 	    animindex++;
 	    if (animindex >= 9) animindex = 0;

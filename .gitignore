@@ -5,3 +5,5 @@
 stl_pch.*
 CGE7.ini
 mz700fon.dat
+/.vs
+/x64

@@ -89,7 +89,7 @@ int load_CGEdit(char *buf) {
 void send_to_clipboard(HWND hwnd, int x1, int y1, int x2, int y2) {
 	HGLOBAL hG;
 	char *p;
-	int len, l, c;
+	int len, c;
 	int i, j, w, h;
 	w = (x2-x1+1);
 	h = (y2-y1+1);
@@ -148,7 +148,7 @@ void send_to_clipboard(HWND hwnd, int x1, int y1, int x2, int y2) {
 void floater_to_clipboard(HWND hwnd, int w, int h) {
 	HGLOBAL hG;
 	char *p;
-	int len, l, c;
+	int len, c;
 	int i, j;
 	len = w*h*3;				/* length of data string */
 	len += (len + 15) >> 4;			/* add size of CR+LF */
@@ -407,7 +407,7 @@ int add_recent_file(char *fn) {
 	int i, j, k;
 	if (fn == NULL || fn[0] == 0) return 0;
 	for (i=0; i<9; i++) {
-	    if (!strcmpi(&RecentFiles[i][0], fn)) {
+	    if (!_strcmpi(&RecentFiles[i][0], fn)) {
 		// すでにリスト中にあるファイルを先頭にする
 		for (j=0; j<9; j++) {
 		    if (RecentFileIndex[j] == i) {
@@ -438,7 +438,7 @@ int del_recent_file(char *fn) {
 	int i, j, k;
 	if (fn == NULL || fn[0] == 0) return 0;
 	for (i=0; i<9; i++) {
-	    if (!strcmpi(&RecentFiles[i][0], fn)) {
+	    if (!_strcmpi(&RecentFiles[i][0], fn)) {
 		// リスト中にあるファイル名を削除する
 		RecentFiles[i][0] = 0;
 		for (j=0; j<9; j++) {
