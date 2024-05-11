@@ -6,9 +6,9 @@ This is a modified version of CGE7 by **[Youkan700](https://github.com/SHARPENTI
 - Removed Japanese string input
 - Added `2nd Character Set` checkbox in string input dialog to use 2nd charset upper case characters.
 
-All these modifications require the european MZ 700 font rom.
+All these modifications require the international MZ 700 font ROM (can be found **[here](https://original.sharpmz.org/download/mz7cgint.zip)** - Rename the file as `MZ700FON.DAT` and put it in the same folder as the exe file).
 
-- Added an `Export` option in the `File` menu. This option exports the screen as an assembly source. There are two export options: `Raw` and `Compressed`. `Raw` saves the screen as is, `Compressed` saves the screen with a RLE compression.
+- Added an `Export` option in the `File` menu. This option exports the screen as an assembly source. There are two export options: `Raw` and `Compressed`. `Raw` saves the screen as is, `Compressed` saves the screen with a RLE compression. This file also contains the animation blocks.
 
 Here is the code to display the screen content:
 
