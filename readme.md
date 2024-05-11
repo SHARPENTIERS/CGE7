@@ -29,15 +29,15 @@ Here is the code to display the screen content:
 #### Compressed
 
     UNCOMPRESS:
-        LD      B,(HL)
-        INC     HL
-        LD      A,(HL)
-        INC     HL
+        LD      B,(IX)
+        INC     IX
+        LD      A,(IX)
+        INC     IX
         CP      0
         JR      Z,.END
     .LOOP:
-        LD      (DE),B
-        INC     DE
+        LD      (HL),B
+        INC     HL
         DEC     A
         JR      NZ,.LOOP
         JR      UNCOMPRESS
@@ -45,11 +45,11 @@ Here is the code to display the screen content:
         RET
 
     DISPLAY_COMPRESSED_SCREEN:
-        LD      HL,SCREEN_CHARS
-        LD      DE,$D000
+        LD      IX,SCREEN_CHARS
+        LD      HL,$D000
         CALL    UNCOMPRESS
-        LD      HL,SCREEN_ATTRIBUTES
-        LD      DE,$D800
+        LD      IX,SCREEN_ATTRIBUTES
+        LD      HL,$D800
         CALL    UNCOMPRESS
         RTS
     
