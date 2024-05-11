@@ -1,6 +1,24 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define WS_POPUP            0x80000000L
+#define WS_CAPTION          0x00C00000L
+#define WS_SYSMENU          0x00080000L
+#define ES_MULTILINE        0x0004L
+#define ES_WANTRETURN       0x1000L
+#define BS_AUTOCHECKBOX     0x00000003L
+#define WS_TABSTOP          0x00010000L
+#define DS_SETFONT          0x40L 
+#define DS_MODALFRAME       0x80L
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
 /////////////////////////////////////////////////////////////////////////////
 // English (United States) resources
 
@@ -159,7 +177,8 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,65,86,42,14
     PUSHBUTTON      "Cancel",IDCANCEL,116,86,42,14
     EDITTEXT        IDC_EDIT_TEXT,0,2,162,80,ES_MULTILINE | ES_WANTRETURN
-    CONTROL         "Vertical",IDC_CHECK_TATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,4,86,42,10
+    CONTROL         "Vertical",IDC_CHECK_TATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,84,42,10
+    CONTROL         "2nd Char Set",IDC_CHECK_2NDCS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,95,56,10
 END
 
 IDD_ANIM DIALOGEX 0, 0, 200, 100
@@ -185,7 +204,15 @@ END
 
 2 TEXTINCLUDE 
 BEGIN
-    "\0"
+    "#define WS_POPUP            0x80000000L\r\n"
+    "#define WS_CAPTION          0x00C00000L\r\n"
+    "#define WS_SYSMENU          0x00080000L\r\n"
+    "#define ES_MULTILINE        0x0004L\r\n"
+    "#define ES_WANTRETURN       0x1000L\r\n"
+    "#define BS_AUTOCHECKBOX     0x00000003L\r\n"
+    "#define WS_TABSTOP          0x00010000L\r\n"
+    "#define DS_SETFONT          0x40L \r\n"
+    "#define DS_MODALFRAME       0x80L\0"
 END
 
 3 TEXTINCLUDE 

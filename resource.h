@@ -1,19 +1,7 @@
-//#include <winuser.h>
-
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
 // Used by CGE7.rc
 //
-#define DS_SETFONT          0x40L 
-#define DS_MODALFRAME       0x80L
-#define WS_POPUP            0x80000000L
-#define WS_CAPTION          0x00C00000L
-#define WS_SYSMENU          0x00080000L
-#define ES_MULTILINE        0x0004L
-#define ES_WANTRETURN       0x1000L
-#define BS_AUTOCHECKBOX     0x00000003L
-#define WS_TABSTOP          0x00010000L
-
 #define SW_HIDE                         0
 #define HIDE_WINDOW                     0
 #define WM_NULL                         0x0000
@@ -1592,6 +1580,7 @@
 #define IDD_STRINPUT                    5000
 #define IDC_EDIT_TEXT                   5001
 #define IDC_CHECK_TATE                  5002
+#define IDC_CHECK_2NDCS                 5003
 #define IDD_ANIM                        5050
 #define IDC_SLIDER1                     5051
 #define ID_STATUSBAR                    6000
@@ -1722,6 +1711,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        101
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1000
-#define _APS_NEXT_SYMED_VALUE           101
+#define _APS_NEXT_SYMED_VALUE           103
 #endif
 #endif
