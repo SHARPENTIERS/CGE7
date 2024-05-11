@@ -153,9 +153,9 @@ void openTextInputDialog(HINSTANCE hInst, HWND hwnd) {
 	    }
 	    p = buf;
 	    if (tategaki) {
-			x = 38;
+			x = 39;
 			y =  0;
-			w = 2;
+			w = 1;
 			h = 0;
 	    }
 		else {
@@ -181,9 +181,9 @@ void openTextInputDialog(HINSTANCE hInst, HWND hwnd) {
 				}
 				else {
 					y = 0;
-					x -= 2;
+					x -= 1;
 					if (x < 0) break;
-					w += 2;
+					w += 1;
 			    }
 			}
 	    }

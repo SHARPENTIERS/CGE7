@@ -51,6 +51,12 @@ BEGIN
         MENUITEM "&Save",                       IDM_SAVE
         MENUITEM "Save &As",                    IDM_SAVEAS
         MENUITEM SEPARATOR
+        POPUP "Export"
+        BEGIN
+            MENUITEM "Raw",                         IDM_EXPORT_RAW
+            MENUITEM "Compressed",                  IDM_EXPORT_COMPRESSED
+        END
+        MENUITEM SEPARATOR
         MENUITEM "Load Overlay BMP",            IDM_LOADBMP
         MENUITEM SEPARATOR
         POPUP "&Recently Used Files"
@@ -107,15 +113,15 @@ BEGIN
     END
     POPUP "&Animation"
     BEGIN
-        MENUITEM "Set to 1st Frame",            IDM_ANIM1, GRAYED
-        MENUITEM "Set to 2nd Frame",            IDM_ANIM2, GRAYED
-        MENUITEM "Set to 3rd Frame",            IDM_ANIM3, GRAYED
-        MENUITEM "Set to 4th Frame",            IDM_ANIM4, GRAYED
-        MENUITEM "Set to 5th Frame",            IDM_ANIM5, GRAYED
-        MENUITEM "Set to 6th Frame",            IDM_ANIM6, GRAYED
-        MENUITEM "Set to 7th Frame",            IDM_ANIM7, GRAYED
-        MENUITEM "Set to 8th Frame",            IDM_ANIM8, GRAYED
-        MENUITEM "Set to 9th Frame",            IDM_ANIM9, GRAYED
+        MENUITEM "Set to Frame #1",             IDM_ANIM1, GRAYED
+        MENUITEM "Set to Frame #2",             IDM_ANIM2, GRAYED
+        MENUITEM "Set to Frame #3",             IDM_ANIM3, GRAYED
+        MENUITEM "Set to Frame #4",             IDM_ANIM4, GRAYED
+        MENUITEM "Set to Frame #5",             IDM_ANIM5, GRAYED
+        MENUITEM "Set to Frame #6",             IDM_ANIM6, GRAYED
+        MENUITEM "Set to Frame #7",             IDM_ANIM7, GRAYED
+        MENUITEM "Set to Frame #8",             IDM_ANIM8, GRAYED
+        MENUITEM "Set to Frame #9",             IDM_ANIM9, GRAYED
         MENUITEM "Cancel All Frames",           IDM_ANIM0, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "Start Animation...",          IDM_DO_ANIM, GRAYED
@@ -124,10 +130,10 @@ BEGIN
     BEGIN
         MENUITEM "Semi-Graphics Mode",          IDM_SGMODE
         MENUITEM SEPARATOR
-        MENUITEM "Shift Selection Left (Ctrl + ?)", IDM_SG_LEFT
-        MENUITEM "Shift Selection Right (Ctrl + ?)", IDM_SG_RIGHT
-        MENUITEM "Shift Selection Up (Ctrl + ?)", IDM_SG_UP
-        MENUITEM "Shift Selection Down (Ctrl + ?)", IDM_SG_DOWN
+        MENUITEM "Shift Selection Left (Ctrl + Left)", IDM_SG_LEFT
+        MENUITEM "Shift Selection Right (Ctrl +Right )", IDM_SG_RIGHT
+        MENUITEM "Shift Selection Up (Ctrl + Up)", IDM_SG_UP
+        MENUITEM "Shift Selection Down (Ctrl + Down)", IDM_SG_DOWN
     END
     POPUP "&Help"
     BEGIN

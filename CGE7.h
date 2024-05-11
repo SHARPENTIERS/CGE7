@@ -27,6 +27,8 @@
 #define	IDM_TEST	1003
 #define	IDM_END		1004
 #define	IDM_LOADBMP	1005
+#define IDM_EXPORT_COMPRESSED           40004
+#define IDM_EXPORT_RAW                  40005
 
 #define IDM_RECENT_NONE 1010
 #define IDM_RECENT_1    1011

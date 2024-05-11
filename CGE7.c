@@ -1709,6 +1709,54 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	return msg.wParam;
 }
 
+// ============================================================================
+// --- Export RAW/Compressed
+// ============================================================================
+
+HANDLE openExportFile(HWND hWnd) {
+
+	OPENFILENAME ofn;
+	HANDLE hFile;
+
+	memset(&ofn, 0, sizeof(OPENFILENAME));
+	ofn.lStructSize = sizeof(OPENFILENAME);
+	ofn.hwndOwner = hWnd;
+	ofn.lpstrFilter = "Assembly File(*.asm)\0*.asm\0Assembly File(*.z80)\0*.z80\0All files(*.*)\0*.*\0\0";
+	ofn.lpstrFile = szFileName;
+	ofn.lpstrFileTitle = szFile;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.nMaxFileTitle = sizeof(szFile);
+	ofn.Flags = OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
+	ofn.lpstrDefExt = "asm";
+	ofn.lpstrTitle = "Export";
+
+	if (GetSaveFileName(&ofn) == 0) return NULL;
+
+	hFile = CreateFile(szFileName, GENERIC_WRITE, 0, 0, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile != INVALID_HANDLE_VALUE) {
+		return hFile;
+	}
+	else {
+		MessageBox(hWnd, "Save Error", "Error", MB_ICONERROR | MB_OK);
+		return NULL;
+	}
+}
+
+void exportRaw(HWND hWnd) {
+	HANDLE file = openExportFile(hWnd);
+	if (file == NULL) { return;  }
+	exportRawFile(file);
+	CloseHandle(file);
+}
+
+void exportCompressed( HWND hWnd ) {
+	HANDLE file = openExportFile(hWnd);
+	if (file == NULL) { return; }
+	exportCompressedFile(file);
+	CloseHandle(file);
+}
+
+
 /*---------------------------------------------------------------------------*/
 void treatmenu(HWND hwnd, HMENU hMenu) {
 	int id, pos, cnt;
@@ -1753,10 +1801,10 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		    if (animsel[i].x1 < 0) {
 			f |= (selection && (selx1 >= 0) && (sely1 >= 0) &&
 				(selx2 < 40) && (sely2 < 25) && !isAnimDlgOpen()) ? MF_ENABLED : MF_GRAYED;
-			wsprintf(buf, "%d%s", i+1, "Set every frame");
+			wsprintf(buf, "%s%d", "Set to frame #", i+1);
 		    } else {
 			f |= !isAnimDlgOpen() ? MF_ENABLED : MF_GRAYED;
-			wsprintf(buf, "%d%s", i+1, "Cancel frame");
+			wsprintf(buf, "%s%d", "Delete frame #", i + 1);
 		    }
 		    ModifyMenu(hMenu, pos, f, id, buf);
 		    break;
@@ -2443,6 +2491,20 @@ savefile:		land_floater();
 		    case IDM_END:
 			SendMessage(hwnd, WM_CLOSE, 0, 0L);
 			return 0;
+
+
+			case IDM_EXPORT_RAW:
+				land_floater();
+				hide_selection();
+				exportRaw( hwnd );
+				return 0;
+
+			case IDM_EXPORT_COMPRESSED:
+				land_floater();
+				hide_selection();
+				exportCompressed( hwnd );
+				return 0;
+
 
 		    default:
 			break;

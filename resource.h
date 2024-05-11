@@ -1677,6 +1677,11 @@
 #define LVS_NOSORTHEADER                0x8000
 #define TVS_NOHSCROLL                   0x8000
 #define TCS_FOCUSNEVER                  0x8000
+#define ID_FILE_EXPORT                  40001
+#define ID_EXPORT_RAW                   40002
+#define ID_EXPORT_COMPRESSED            40003
+#define IDM_EXPORT_COMPRESSED           40004
+#define IDM_EXPORT_RAW                  40005
 #define SC_SIZE                         0xF000
 #define SC_SEPARATOR                    0xF00F
 #define SC_MOVE                         0xF010
@@ -1709,7 +1714,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        101
-#define _APS_NEXT_COMMAND_VALUE         40001
+#define _APS_NEXT_COMMAND_VALUE         40006
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           103
 #endif

@@ -1,0 +1,58 @@
+This is a modified version of CGE7 by **[Youkan700](https://github.com/SHARPENTIERS/CGE7)**, the screen editor for Sharp MZ700. The modifications are:
+
+- Added Visual Studio 2022 project (also works with Jetbrains Rider)
+- Translated UI
+- Modified String input to allow lowercase with non Japanese character set
+- Removed Japanese string input
+- Added `2nd Character Set` checkbox in string input dialog to use 2nd charset upper case characters.
+
+All these modifications require the european MZ 700 font rom.
+
+- Added an `Export` option in the `File` menu. This option exports the screen as an assembly source. There are two export options: `Raw` and `Compressed`. `Raw` saves the screen as is, `Compressed` saves the screen with a RLE compression.
+
+Here is the code to display the screen content:
+
+
+##### Raw
+
+    DISPLAY_SCREEN:
+        LD      HL,SCREEN_CHARS
+        LD      DE,$D000
+        LD      BC,1000
+        LDIR
+        LD      HL,SCREEN_ATTRIBUTES
+        LD      DE,$D800
+        LD      BC,1000
+        LDIR
+        RTS
+
+#### Compressed
+
+    UNCOMPRESS:
+        LD      B,(HL)
+        INC     HL
+        LD      A,(HL)
+        INC     HL
+        CP      0
+        JR      Z,.END
+    .LOOP:
+        LD      (DE),B
+        INC     DE
+        DEC     A
+        JR      NZ,.LOOP
+        JR      UNCOMPRESS
+    .END:
+        RET
+
+    DISPLAY_COMPRESSED_SCREEN:
+        LD      HL,SCREEN_CHARS
+        LD      DE,$D000
+        CALL    UNCOMPRESS
+        LD      HL,SCREEN_ATTRIBUTES
+        LD      DE,$D800
+        CALL    UNCOMPRESS
+        RTS
+    
+
+
+ 
