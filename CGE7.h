@@ -2,6 +2,7 @@
 #define __CGE7_H__
 
 #define VERSTRING	"0.23"
+#define TS_VERSTRING "1.0"
 
 //#define YOKO	(8+640+10+(16*16+15*2)+8)
 //#define TATE	(8+400+8)

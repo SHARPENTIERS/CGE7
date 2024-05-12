@@ -2441,7 +2441,7 @@ showbit3swap:		showbit3 ^= 1;
 			return 0;
 		    }
 		    case IDM_ABOUT:
-			MessageBox(hwnd, "MZ-700 Character Graphics Editor v" VERSTRING "\n\tby youkan", "About", MB_OK);
+			MessageBox(hwnd, "MZ-700 Character Graphics Editor v" TS_VERSTRING "\nBased on Youkan's version " VERSTRING, "About", MB_OK);
 			return 0;
 
 		    case IDM_SAVE:
