@@ -9,6 +9,7 @@ extern int chr[1000];
 extern int atr[1000];
 extern int floaterchr[1000];
 extern int floateratr[1000];
+extern AnimBox animsel[9];
 
 int RecentFileIndex[9] = { -1,-1, -1, -1, -1, -1, -1, -1, -1 };
 char RecentFiles[9][MAX_PATH];
@@ -75,7 +76,7 @@ int load_CGEdit(char *buf) {
 	    j = 0;
 	    while ( (c=*buf++) && c >= '0' && c <= '9') j = j * 10 + (int)(c - '0');
 	    atr[i] |= j;
-	    if (i < 999 & (!c || c != ',')) return 0;
+	    if ((i < 999) & (!c || c != ',')) return 0;
 	}
 	return 1;
 }
@@ -89,7 +90,7 @@ int load_CGEdit(char *buf) {
 void send_to_clipboard(HWND hwnd, int x1, int y1, int x2, int y2) {
 	HGLOBAL hG;
 	char *p;
-	int len, l, c;
+	int len, c;
 	int i, j, w, h;
 	w = (x2-x1+1);
 	h = (y2-y1+1);
@@ -148,7 +149,7 @@ void send_to_clipboard(HWND hwnd, int x1, int y1, int x2, int y2) {
 void floater_to_clipboard(HWND hwnd, int w, int h) {
 	HGLOBAL hG;
 	char *p;
-	int len, l, c;
+	int len, c;
 	int i, j;
 	len = w*h*3;				/* length of data string */
 	len += (len + 15) >> 4;			/* add size of CR+LF */
@@ -407,7 +408,7 @@ int add_recent_file(char *fn) {
 	int i, j, k;
 	if (fn == NULL || fn[0] == 0) return 0;
 	for (i=0; i<9; i++) {
-	    if (!strcmpi(&RecentFiles[i][0], fn)) {
+	    if (!_strcmpi(&RecentFiles[i][0], fn)) {
 		// すでにリスト中にあるファイルを先頭にする
 		for (j=0; j<9; j++) {
 		    if (RecentFileIndex[j] == i) {
@@ -438,7 +439,7 @@ int del_recent_file(char *fn) {
 	int i, j, k;
 	if (fn == NULL || fn[0] == 0) return 0;
 	for (i=0; i<9; i++) {
-	    if (!strcmpi(&RecentFiles[i][0], fn)) {
+	    if (!_strcmpi(&RecentFiles[i][0], fn)) {
 		// リスト中にあるファイル名を削除する
 		RecentFiles[i][0] = 0;
 		for (j=0; j<9; j++) {
@@ -462,3 +463,102 @@ char *get_recent_file(int i) {
 	if (j < 0) return NULL;
 	return &RecentFiles[j][0];
 }
+
+
+// ============================================================================
+// --- Export Files
+// ============================================================================
+
+// --- Animations
+
+void writeAnimations(HANDLE file) {
+	char buf[256];
+	long l, w;
+
+	l = wsprintf(buf, "\n\nSCREEN_ANIMATIONS:\n\n");
+	WriteFile(file, buf, l, &w, NULL);
+	for (int i = 0; i < 9; i++) {
+		int x1 = animsel[i].x1;
+		l = wsprintf(buf, "  DB %02d,%02d,%02d,%02d\n", x1, x1 == -1 ? -1 : animsel[i].y1, x1 == -1 ? -1 : animsel[i].x2, x1 == -1 ? -1 : animsel[i].y2 );
+		WriteFile(file, buf, l, &w, NULL);
+	}
+}
+
+
+// --- Raw
+
+void writeRaw( HANDLE file, char* label, int* vbuf) {
+	char buf[512];
+	long l, w;
+
+	l = wsprintf(buf, "%s:\n\n  DB ", label);
+	WriteFile(file, buf, l, &w, NULL);
+	for (int y = 0; y < 25; y++) {
+		for (int x = 0; x < 40; x++) {
+			int p = (y * 40) + x;
+			l = wsprintf(buf, "$%02X%s", vbuf[p], x == 39 ? y == 24 ? "\n" : "\n  DB " : ",");
+			WriteFile(file, buf, l, &w, NULL);
+		}
+	}
+}
+
+void exportRawFile(HANDLE file) {
+	writeRaw(file, "SCREEN_CHARS", chr);
+	writeRaw(file, "\nSCREEN_ATTRIBUTES", atr);
+	writeAnimations(file);
+}
+
+// --- RLE compressed
+
+void writeCompressed(HANDLE file, char *label, int *vbuf) {
+	char buf[512];
+	long l, w;
+	int cbuf[1000];
+	int i = 1, j = 0, n = 1, k;
+
+	// rle compression
+
+	int v = cbuf[j++] = vbuf[0];
+	while (i < 1000) {
+		int v2 = vbuf[i];
+		if (v2 == v) { i++; n++; }
+		else { cbuf[j++] = n; cbuf[j++] = v2; v = v2; n = 0; }
+	}
+	cbuf[j++] = n;
+
+	// breaks repeat > 0xFF into smaller chunks
+
+	int cbuf2[1000];
+	for (i = 0, k = 0; i < j; i += 2) {
+		v = cbuf[i];
+		n = cbuf[i + 1];
+		if (n > 0xFF) {
+			while (n > 0xFF) {
+				cbuf2[k++] = v;
+				cbuf2[k++] = 0xFF;
+				n -= 0xFF;
+			}
+		}
+		cbuf2[k++] = v;
+		cbuf2[k++] = n;
+	}
+
+	// save
+
+	l = wsprintf(buf, "%s:\n\n  DB ", label);
+	WriteFile(file, buf, l, &w, NULL);
+	for (i = 0, j = 1; i < k; i += 2, j++) {
+		l = wsprintf(buf, "$%02X,$%02X%s", cbuf2[i], cbuf2[i + 1], j % 21 != 0 ? "," : "\n  DB ");
+		WriteFile(file, buf, l, &w, NULL);
+	}
+	l = wsprintf(buf, "$00,$00\n");
+	WriteFile(file, buf, l, &w, NULL);
+}
+
+
+void exportCompressedFile(HANDLE file) {
+	writeCompressed(file, "SCREEN_CHARS", chr);
+	writeCompressed(file, "\nSCREEN_ATTRIBUTES", atr);
+	writeAnimations(file);
+}
+

@@ -1,157 +1,281 @@
-#include "windows.h"
-#include "CGE7.h"
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
 
-//////////////////////////////////////////////
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define WS_POPUP            0x80000000L
+#define WS_CAPTION          0x00C00000L
+#define WS_SYSMENU          0x00080000L
+#define ES_MULTILINE        0x0004L
+#define ES_WANTRETURN       0x1000L
+#define BS_AUTOCHECKBOX     0x00000003L
+#define WS_TABSTOP          0x00010000L
+#define DS_SETFONT          0x40L 
+#define DS_MODALFRAME       0x80L
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+MYICON                  ICON                    "cge7.ico"
+
+MYICONS                 ICON                    "cge7s.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
 //
 // Menu
 //
 
-myIcon	ICON cge7.ico
-myIconS	ICON cge7s.ico
+CGE7MENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Open",                       IDM_OPEN
+        MENUITEM "&Save",                       IDM_SAVE
+        MENUITEM "Save &As",                    IDM_SAVEAS
+        MENUITEM SEPARATOR
+        POPUP "Export"
+        BEGIN
+            MENUITEM "Raw",                         IDM_EXPORT_RAW
+            MENUITEM "Compressed",                  IDM_EXPORT_COMPRESSED
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "Load Overlay BMP",            IDM_LOADBMP
+        MENUITEM SEPARATOR
+        POPUP "&Recently Used Files"
+        BEGIN
+            MENUITEM "(None)",                      IDM_RECENT_NONE, GRAYED
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       IDM_END
+    END
+    POPUP "&Edit"
+    BEGIN
+        MENUITEM "Undo (Ctrl+Z)",               IDM_UNDO, GRAYED
+        MENUITEM "Redo (Ctrl+Y)",               IDM_REDO, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Cut (Ctrl+X)",                IDM_CUT, GRAYED
+        MENUITEM "Copy (Ctrl+C)",               IDM_COPY, GRAYED
+        MENUITEM "Paste (Ctrl+V)",              IDM_PASTE, GRAYED
+        MENUITEM "Copy As Image",               IDM_BITMAPCOPY, GRAYED
+        MENUITEM "Marked Areas are Transparent", IDM_MARKISTP
+        MENUITEM SEPARATOR
+        MENUITEM "Select All (Ctrl+A)",         IDM_SELALL
+        MENUITEM SEPARATOR
+        MENUITEM "Fill",                        IDM_FILL, GRAYED
+        MENUITEM "Horizontal Flip",             IDM_HREVERSE, GRAYED
+        MENUITEM "Vertical Flip",               IDM_VREVERSE, GRAYED
+        MENUITEM "String Input...",             IDM_STRINPUT
+    END
+    POPUP "&Display"
+    BEGIN
+        MENUITEM "Display Grid (Ctrl+G)",       IDM_GRID, CHECKED
+        POPUP "Grid Shape"
+        BEGIN
+            MENUITEM ".",                           IDM_GRIDTYPE0, CHECKED
+            MENUITEM "Å+",                          IDM_GRIDTYPE1
+        END
+        POPUP "&Zoom"
+        BEGIN
+            MENUITEM "x&1",                         IDM_ZOOM1
+            MENUITEM "x&2",                         IDM_ZOOM2
+            MENUITEM "x&3",                         IDM_ZOOM3
+            MENUITEM "x&4",                         IDM_ZOOM4
+            MENUITEM "x&5",                         IDM_ZOOM5
+            MENUITEM "x&6",                         IDM_ZOOM6
+            MENUITEM "x&7",                         IDM_ZOOM7
+            MENUITEM "x&8",                         IDM_ZOOM8
+        END
+        MENUITEM "Display Animation Frame",     IDM_ANIMFRAME, CHECKED
+        MENUITEM "Display Overlay",             IDM_OVERLAY
+        MENUITEM "Display Status Bar",          IDM_STATUSBAR
+        MENUITEM "Mark Bit3 Attribute (F9)",    IDM_SHOWBIT3
+        MENUITEM "Mark Display Code $00 (F11)", IDM_SHOWSPACE
+        MENUITEM SEPARATOR
+        MENUITEM "Alternate Palette (SPACE)",   IDM_ALTPAL
+    END
+    POPUP "&Animation"
+    BEGIN
+        MENUITEM "Set to Frame #1",             IDM_ANIM1, GRAYED
+        MENUITEM "Set to Frame #2",             IDM_ANIM2, GRAYED
+        MENUITEM "Set to Frame #3",             IDM_ANIM3, GRAYED
+        MENUITEM "Set to Frame #4",             IDM_ANIM4, GRAYED
+        MENUITEM "Set to Frame #5",             IDM_ANIM5, GRAYED
+        MENUITEM "Set to Frame #6",             IDM_ANIM6, GRAYED
+        MENUITEM "Set to Frame #7",             IDM_ANIM7, GRAYED
+        MENUITEM "Set to Frame #8",             IDM_ANIM8, GRAYED
+        MENUITEM "Set to Frame #9",             IDM_ANIM9, GRAYED
+        MENUITEM "Cancel All Frames",           IDM_ANIM0, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "Start Animation...",          IDM_DO_ANIM, GRAYED
+    END
+    POPUP "&Semi-Graphics"
+    BEGIN
+        MENUITEM "Semi-Graphics Mode",          IDM_SGMODE
+        MENUITEM SEPARATOR
+        MENUITEM "Shift Selection Left (Ctrl + Left)", IDM_SG_LEFT
+        MENUITEM "Shift Selection Right (Ctrl +Right )", IDM_SG_RIGHT
+        MENUITEM "Shift Selection Up (Ctrl + Up)", IDM_SG_UP
+        MENUITEM "Shift Selection Down (Ctrl + Down)", IDM_SG_DOWN
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "About(&A)...",                IDM_ABOUT
+    END
+END
 
-CGE7Menu MENU DISCARDABLE
-{
-    POPUP "ÉtÉ@ÉCÉã(&F)"
-    {
-        MENUITEM "äJÇ≠(&O)...\aCtrl+O",		IDM_OPEN
-        MENUITEM "è„èëÇ´ï€ë∂(&S)\aCtrl+S",	IDM_SAVE
-        MENUITEM "ñºëOÇÇ¬ÇØÇƒï€ë∂(&A)",	IDM_SAVEAS
-	MENUITEM SEPARATOR
-	MENUITEM "ÉIÅ[ÉoÅ[ÉåÉCBMPì«Ç›çûÇ›",	IDM_LOADBMP
-//	MENUITEM "Test",			IDM_TEST
-	MENUITEM SEPARATOR
-	POPUP    "ç≈ãﬂégÇ¡ÇΩÉtÉ@ÉCÉã(&F)"
-	{
-	    MENUITEM "(Ç»Çµ)",			IDM_RECENT_NONE, GRAYED
-	}
-	MENUITEM SEPARATOR
-        MENUITEM "èIóπ(&X)",			IDM_END
-    }
-    POPUP "ï“èW(&E)"
-    {
-        MENUITEM "å≥Ç…ñﬂÇ∑\aCtrl+Z",		IDM_UNDO,	GRAYED
-        MENUITEM "Ç‚Ç¡ÇœÇËñﬂÇ≥Ç»Ç¢\aCtrl+Y",	IDM_REDO,	GRAYED
-	MENUITEM SEPARATOR
-        MENUITEM "êÿÇËéÊÇË\aCtrl+X",		IDM_CUT,	GRAYED
-        MENUITEM "ÉRÉsÅ[\aCtrl+C",		IDM_COPY,	GRAYED
-        MENUITEM "ì\ÇËïtÇØ\aCtrl+V",		IDM_PASTE,	GRAYED
-        MENUITEM "âÊëúÇ≈ÉRÉsÅ[",		IDM_BITMAPCOPY,	GRAYED
-        MENUITEM "É}Å[ÉNâ”èäÇÕìßñæ",		IDM_MARKISTP
-	MENUITEM SEPARATOR
-        MENUITEM "ëSÇƒÇëIë\aCtrl+A",		IDM_SELALL
-	MENUITEM SEPARATOR
-        MENUITEM "ìhÇËÇ¬Ç‘Çµ",			IDM_FILL,	GRAYED
-        MENUITEM "ç∂âEîΩì]",			IDM_HREVERSE,	GRAYED
-        MENUITEM "è„â∫îΩì]",			IDM_VREVERSE,	GRAYED
-        MENUITEM "ï∂éöóÒì¸óÕ...",		IDM_STRINPUT
-    }
-    POPUP "ï\é¶(&V)"
-    {
-        MENUITEM "ÉOÉäÉbÉhï\é¶\aCtrl+G",	IDM_GRID,	CHECKED
-	POPUP    "ÉOÉäÉbÉhå`èÛ"
-	{
-	    MENUITEM "ÅE",			IDM_GRIDTYPE0,	CHECKED
-	    MENUITEM "Å{",			IDM_GRIDTYPE1
-	}
-	POPUP    "ägëÂï\é¶(&Z)"
-	{
-	    MENUITEM "x&1",			IDM_ZOOM1
-	    MENUITEM "x&2",			IDM_ZOOM2
-	    MENUITEM "x&3",			IDM_ZOOM3
-	    MENUITEM "x&4",			IDM_ZOOM4
-	    MENUITEM "x&5",			IDM_ZOOM5
-	    MENUITEM "x&6",			IDM_ZOOM6
-	    MENUITEM "x&7",			IDM_ZOOM7
-	    MENUITEM "x&8",			IDM_ZOOM8
-	}
-//      MENUITEM "ägëÂï\é¶\aCtrl+E",		IDM_EXPAND,	CHECKED
-        MENUITEM "ÉAÉjÉÅÅ[ÉVÉáÉìògï\é¶",	IDM_ANIMFRAME,	CHECKED
-        MENUITEM "ÉIÅ[ÉoÅ[ÉåÉCï\é¶",		IDM_OVERLAY
-        MENUITEM "ÉXÉeÅ[É^ÉXÉoÅ[ï\é¶",		IDM_STATUSBAR
-        MENUITEM "ÉAÉgÉäÉrÉÖÅ[ÉgÇÃBit3ÇÉ}Å[ÉN\aF9",		IDM_SHOWBIT3
-        MENUITEM "ÉfÉBÉXÉvÉåÉCÉRÅ[Éh00hÇÉ}Å[ÉN\aF11",		IDM_SHOWSPACE
-	MENUITEM SEPARATOR
-        MENUITEM "ï‚èïÉpÉåÉbÉg\aSPACE",		IDM_ALTPAL
-    }
-    POPUP "ÉAÉjÉÅÅ[ÉVÉáÉì(&A)"
-    {
-        MENUITEM "1ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM1,	GRAYED
-        MENUITEM "2ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM2,	GRAYED
-        MENUITEM "3ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM3,	GRAYED
-        MENUITEM "4ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM4,	GRAYED
-        MENUITEM "5ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM5,	GRAYED
-        MENUITEM "6ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM6,	GRAYED
-        MENUITEM "7ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM7,	GRAYED
-        MENUITEM "8ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM8,	GRAYED
-        MENUITEM "9ÉRÉ}ÇﬂÇ…ê›íË",		IDM_ANIM9,	GRAYED
-        MENUITEM "ëSÉRÉ}ÇÉLÉÉÉìÉZÉã",		IDM_ANIM0,	GRAYED
-	MENUITEM SEPARATOR
-        MENUITEM "ÉAÉjÉÅÅ[ÉVÉáÉìäJén...",	IDM_DO_ANIM,	GRAYED
-    }
-    POPUP "ÉZÉ~ÉOÉâÉtÉBÉbÉN(&S)"
-    {
-        MENUITEM "ÉZÉ~ÉOÉâÉtÉBÉbÉNÉÇÅ[Éh",	IDM_SGMODE
-	MENUITEM SEPARATOR
-        MENUITEM "ëIëîÕàÕì‡Çç∂Ç…ÉVÉtÉg\aCtrl+Å©", IDM_SG_LEFT
-        MENUITEM "ëIëîÕàÕì‡ÇâEÇ…ÉVÉtÉg\aCtrl+Å®", IDM_SG_RIGHT
-        MENUITEM "ëIëîÕàÕì‡Çè„Ç…ÉVÉtÉg\aCtrl+Å™", IDM_SG_UP
-        MENUITEM "ëIëîÕàÕì‡Çâ∫Ç…ÉVÉtÉg\aCtrl+Å´", IDM_SG_DOWN
-    }
-    POPUP "ÉwÉãÉv(&H)"
-    {
-        MENUITEM "About(&A)...",IDM_ABOUT
-    }
-}
 
-//////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
 //
 // Bitmap
 //
 
-ID_TOOLBARBMP	BITMAP DISCARDABLE "buttons.bmp"
+ID_TOOLBARBMP           BITMAP                  "buttons.bmp"
 
-//////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
 //
 // Accelerator
 //
 
-myAccel ACCELERATORS DISCARDABLE
-{
-    "X",            IDM_CUT,		VIRTKEY, CONTROL, NOINVERT
-    "C",            IDM_COPY,		VIRTKEY, CONTROL, NOINVERT
-    "V",            IDM_PASTE,		VIRTKEY, CONTROL, NOINVERT
-    "A",            IDM_SELALL,		VIRTKEY, CONTROL, NOINVERT
-    "Z",            IDM_UNDO,		VIRTKEY, CONTROL, NOINVERT
-    "Y",            IDM_REDO,		VIRTKEY, CONTROL, NOINVERT
-    "S",            IDM_SAVE,		VIRTKEY, CONTROL, NOINVERT
-    "O",            IDM_OPEN,		VIRTKEY, CONTROL, NOINVERT
-    "G",            IDM_GRID,		VIRTKEY, CONTROL, NOINVERT
-    "E",            IDM_EXPAND,		VIRTKEY, CONTROL, NOINVERT
-}
+MYACCEL ACCELERATORS
+BEGIN
+    "X",            IDM_CUT,                VIRTKEY, CONTROL, NOINVERT
+    "C",            IDM_COPY,               VIRTKEY, CONTROL, NOINVERT
+    "V",            IDM_PASTE,              VIRTKEY, CONTROL, NOINVERT
+    "A",            IDM_SELALL,             VIRTKEY, CONTROL, NOINVERT
+    "Z",            IDM_UNDO,               VIRTKEY, CONTROL, NOINVERT
+    "Y",            IDM_REDO,               VIRTKEY, CONTROL, NOINVERT
+    "S",            IDM_SAVE,               VIRTKEY, CONTROL, NOINVERT
+    "O",            IDM_OPEN,               VIRTKEY, CONTROL, NOINVERT
+    "G",            IDM_GRID,               VIRTKEY, CONTROL, NOINVERT
+    "E",            IDM_EXPAND,             VIRTKEY, CONTROL, NOINVERT
+END
 
-//////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
 //
-// Dialogues
+// Dialog
 //
-IDD_STRINPUT DIALOG DISCARDABLE  0, 0, 162, 107
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÉeÉLÉXÉgì¸óÕ"
-FONT 9, "ÇlÇr ÇoÉSÉVÉbÉN"
-{
+
+IDD_STRINPUT DIALOGEX 0, 0, 162, 107
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Text Input"
+FONT 9, "Segoe UI Light", 300, 0, 0x0
+BEGIN
     DEFPUSHBUTTON   "OK",IDOK,65,86,42,14
     PUSHBUTTON      "Cancel",IDCANCEL,116,86,42,14
-    EDITTEXT        IDC_EDIT_TEXT, 0,2,162,80, ES_MULTILINE|ES_WANTRETURN
-    CONTROL         "ècèëÇ´", IDC_CHECK_TATE, "Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP, 4,86,30,10
-}
+    EDITTEXT        IDC_EDIT_TEXT,0,2,162,80,ES_MULTILINE | ES_WANTRETURN
+    CONTROL         "Vertical",IDC_CHECK_TATE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,84,42,10
+    CONTROL         "2nd Char Set",IDC_CHECK_2NDCS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,3,95,56,10
+END
 
-IDD_ANIM DIALOG DISCARDABLE  0, 0, 200, 100
-STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "ÉAÉjÉÅÅ[ÉVÉáÉì"
-FONT 9, "ÇlÇr ÇoÉSÉVÉbÉN"
-{
-    DEFPUSHBUTTON   "ï¬Ç∂ÇÈ",IDOK,80,80,40,14
-    CONTROL         "ë¨ìx",IDC_SLIDER1,TRACKBAR_CLASS,
-		    WS_TABSTOP | TBS_BOTH | TBS_AUTOTICKS, 5,30,160,28
-}
+IDD_ANIM DIALOGEX 0, 0, 200, 100
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Animation"
+FONT 9, "Segoe UI Light", 300, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "Close",IDOK,80,80,40,14
+    CONTROL         "ë¨ìx",IDC_SLIDER1,"msctls_trackbar32",TBS_AUTOTICKS | TBS_BOTH | WS_TABSTOP,5,30,181,28
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define WS_POPUP            0x80000000L\r\n"
+    "#define WS_CAPTION          0x00C00000L\r\n"
+    "#define WS_SYSMENU          0x00080000L\r\n"
+    "#define ES_MULTILINE        0x0004L\r\n"
+    "#define ES_WANTRETURN       0x1000L\r\n"
+    "#define BS_AUTOCHECKBOX     0x00000003L\r\n"
+    "#define WS_TABSTOP          0x00010000L\r\n"
+    "#define DS_SETFONT          0x40L \r\n"
+    "#define DS_MODALFRAME       0x80L\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_STRINPUT, DIALOG
+    BEGIN
+    END
+
+    IDD_ANIM, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_STRINPUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ANIM AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
 

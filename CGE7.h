@@ -2,6 +2,7 @@
 #define __CGE7_H__
 
 #define VERSTRING	"0.23"
+#define TS_VERSTRING "1.0"
 
 //#define YOKO	(8+640+10+(16*16+15*2)+8)
 //#define TATE	(8+400+8)
@@ -27,6 +28,8 @@
 #define	IDM_TEST	1003
 #define	IDM_END		1004
 #define	IDM_LOADBMP	1005
+#define IDM_EXPORT_COMPRESSED           40004
+#define IDM_EXPORT_RAW                  40005
 
 #define IDM_RECENT_NONE 1010
 #define IDM_RECENT_1    1011
@@ -126,6 +129,7 @@
 #define IDD_STRINPUT	5000
 #define IDC_EDIT_TEXT	5001
 #define IDC_CHECK_TATE	5002
+#define IDC_CHECK_2NDCS 5003
 
 #define	IDD_ANIM	5050
 #define IDC_SLIDER1     5051
