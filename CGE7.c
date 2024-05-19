@@ -77,7 +77,7 @@ int lastchrpos = -1;
 
 int lastflag = 0;
 
-unsigned char cgrom[8192];
+unsigned char cgrom[2][8192];
 int chr[1000];
 int atr[1000];
 
@@ -109,6 +109,8 @@ int lastvy = -1;
 int dragx;
 int dragy;
 int dragmode;
+
+int jp_or_eu = 1;
 
 int currtool = IDTBB_PENCIL;
 
@@ -159,14 +161,17 @@ TBBUTTON tbb[] = {
 	{17, IDTBB_B_GREEN,  TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
 	{18, IDTBB_B_CYAN,   TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
 	{19, IDTBB_B_YELLOW, TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
-	{20, IDTBB_B_WHITE,  TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 }
+	{20, IDTBB_B_WHITE,  TBSTATE_ENABLED,		      TBSTYLE_CHECKGROUP, 0, 0 },
+	{ 0,  0,		     TBSTATE_ENABLED,		      TBSTYLE_SEP,        0, 0 },
+	{22, IDTBB_JPTEXT,   TBSTATE_ENABLED | TBSTATE_HIDDEN,  TBSTYLE_BUTTON,     0, 0 },
+	{23, IDTBB_EUTEXT,   TBSTATE_ENABLED,                   TBSTYLE_BUTTON,     0, 0 }
 };
 TBBUTTON tb = {0, 0, TBSTATE_ENABLED, TBSTYLE_SEP, 0, 0};
 
 void make_toolbar(HWND hwnd) {
 	hToolbar = CreateToolbarEx(hwnd, WS_CHILD|WS_VISIBLE, ID_TOOLBAR,
-				   22, hInst, ID_TOOLBARBMP, tbb,
-				   24, 0, 0, 16, 15, sizeof(TBBUTTON));
+				   24, hInst, ID_TOOLBARBMP, tbb,
+				   27, 0, 0, 16, 15, sizeof(TBBUTTON));
 	forecolor = 7;	/* white */
 	backcolor = 1;	/* blue */
 }
@@ -201,18 +206,79 @@ void setStatusBarStr(int i, char *str) {
 	SendMessage(hStatusWnd, SB_SETTEXT, (WPARAM)i | 0, (LPARAM)str);
 }
 
+#if 0
 /*---------------------------------------------------------------------------*/
 int loadmzfont(char *fn, int normal) {
 	HANDLE *fp;
 	DWORD bytesread;
 
 	fp = CreateFile(fn, GENERIC_READ, FILE_SHARE_READ, NULL,
-			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fp == INVALID_HANDLE_VALUE) return 0;
 	if (!ReadFile(fp, &cgrom[normal ? 0 : 4096], 4096, &bytesread, NULL)) return 0;
 	CloseHandle(fp);
 	return 1;
 }
+#else
+int loadmzfont(LPCSTR fn, int jp_or_eu)
+{
+	DWORD bytesread;
+
+	memset(&cgrom[jp_or_eu][0], 0, 8192);
+
+	if (fn)
+	{
+		HANDLE fp = CreateFile(
+			fn, GENERIC_READ, FILE_SHARE_READ, NULL,
+			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
+		if (fp == INVALID_HANDLE_VALUE)
+			return 0;
+
+		if (!ReadFile(fp, &cgrom[jp_or_eu][0], 8192, &bytesread, NULL))
+			return 0;
+
+		CloseHandle(fp);
+	}
+	else
+	{
+		HINSTANCE hInstance = GetModuleHandle(NULL);
+
+		HRSRC hResInfo =
+			FindResource(
+				hInstance,
+				MAKEINTRESOURCE(jp_or_eu ? IDR_JP_CGROM_FILE : IDR_EU_CGROM_FILE),
+				MAKEINTRESOURCE(256));
+
+		HGLOBAL hgRes = LoadResource(hInstance, hResInfo);
+
+		LPVOID src = LockResource(hgRes);
+
+		if (src)
+		{
+			DWORD len = SizeofResource(hInstance, hResInfo);
+
+			memcpy(
+				&cgrom[jp_or_eu][0],
+				src,
+				len);
+
+			UnlockResource(hResInfo);
+		}
+		else
+		{
+			return 0;
+		}
+	}
+
+	memcpy(
+		&cgrom[jp_or_eu][4096],
+		&cgrom[jp_or_eu][0],
+		4096);
+
+	return 1;
+}
+#endif
 
 /*---------------------------------------------------------------------------*/
 HFONT getfont(char *name, int size) {
@@ -358,7 +424,7 @@ void drawchr_m(int x, int y, int chr, int attr) {
 	unsigned char c, *cgr, m;
 	DWORD fc, bc, *p1;
 	w = 8 * (expansion+1);
-	cgr = &cgrom[/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[jp_or_eu][/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	yy = y;
@@ -414,7 +480,7 @@ void drawchr_e(int x, int y, int chr, int attr) {
 	int i,j;
 	unsigned char c, *cgr;
 	DWORD fc, bc, *p1, *p2;
-	cgr = &cgrom[/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[jp_or_eu][/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	for (i=0; i<8; i++) {
@@ -452,7 +518,7 @@ void drawchr_n(int x, int y, int chr, int attr) {
 	int i,j;
 	unsigned char c, *cgr;
 	DWORD fc, bc, *p;
-	cgr = &cgrom[/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[jp_or_eu][/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	for (i=0; i<8; i++) {
@@ -1617,10 +1683,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	bit3color = RGB(0xCC, 0x00, 0xCC);
 
+#if 0
 	if (!loadmzfont("mz700fon.dat", 1)) {
 	    MessageBox(NULL, (LPCSTR)"MZ700FON.DAT not found", (LPCSTR)"Error", MB_OK);
 	    return 0;
 	}
+#else
+	loadmzfont(NULL, 0);
+	loadmzfont(NULL, 1);
+#endif
 
 	for (i=0; i<9; i++) animsel[i].x1 = -1;
 
@@ -2279,7 +2350,20 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 			drawchrpalette();
 			updatechrpalette(hwnd);
 			return 0;
-
+		    case IDTBB_JPTEXT:
+			SendMessage(hToolbar, TB_HIDEBUTTON, IDTBB_JPTEXT, TRUE);
+			SendMessage(hToolbar, TB_HIDEBUTTON, IDTBB_EUTEXT, FALSE);
+			jp_or_eu = 1;
+			drawchrpalette();
+			updatechrpalette(hwnd);
+			return 0;
+		    case IDTBB_EUTEXT:
+			SendMessage(hToolbar, TB_HIDEBUTTON, IDTBB_JPTEXT, FALSE);
+			SendMessage(hToolbar, TB_HIDEBUTTON, IDTBB_EUTEXT, TRUE);
+			jp_or_eu = 0;
+			drawchrpalette();
+			updatechrpalette(hwnd);
+			return 0;
 		    case IDM_GRID:
 			showgrid ^= 1;
 			CheckMenuItem(GetMenu(hwnd), IDM_GRID, showgrid ? MF_CHECKED : MF_UNCHECKED);

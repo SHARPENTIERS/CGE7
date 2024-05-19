@@ -1568,6 +1568,8 @@
 #define _WIN32_IE_IE110                 0x0A00
 #define _WIN32_WINNT                    0x0A00
 #define _WIN32_IE                       0x0A00
+#define IDR_EU_CGROM_FILE               3000
+#define IDR_JP_CGROM_FILE               3001
 #define LVS_ALIGNMASK                   0x0c00
 #define CS_BYTEALIGNCLIENT              0x1000
 #define HDS_OVERFLOW                    0x1000
@@ -1716,6 +1718,6 @@
 #define _APS_NEXT_RESOURCE_VALUE        101
 #define _APS_NEXT_COMMAND_VALUE         40006
 #define _APS_NEXT_CONTROL_VALUE         1000
-#define _APS_NEXT_SYMED_VALUE           103
+#define _APS_NEXT_SYMED_VALUE           105
 #endif
 #endif

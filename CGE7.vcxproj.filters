@@ -69,5 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="readme.md" />
+    <None Include="!mz700-eu.cgrom" />
+    <None Include="!mz700-jp.cgrom" />
   </ItemGroup>
 </Project>

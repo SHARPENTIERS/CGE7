@@ -8,3 +8,7 @@ mz700fon.dat
 /.vs
 /x64
 /.idea
+*.cpp
+Debug/
+Release/
+x64/

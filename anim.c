@@ -7,10 +7,11 @@
 extern HINSTANCE hInst;
 extern AnimBox animsel[9];
 extern DWORD colortable[];
-extern unsigned char cgrom[4096];
+extern unsigned char cgrom[2][8192];
 extern int chr[1000];
 extern int atr[1000];
 extern int expansion;
+extern int jp_or_eu;
 
 int dw, dh;
 int animdlg;
@@ -26,7 +27,7 @@ void animdrawchr(int x, int y, int vx, int vy) {
 	DWORD fc, bc, *p1;
 	ch = chr[vy*40+vx];
 	at = atr[vy*40+vx];
-	cgr = &cgrom[((at & 0x0080)<<4)+(ch<<3)];
+	cgr = &cgrom[jp_or_eu][((at & 0x0080)<<4)+(ch<<3)];
 	fc = colortable[(at & 0x70) >> 4];
 	bc = colortable[(at & 0x07)     ];
 	yy = y;
