@@ -2356,6 +2356,7 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 			jp_or_eu = 1;
 			drawchrpalette();
 			updatechrpalette(hwnd);
+			vram2disp(hwnd);
 			return 0;
 		    case IDTBB_EUTEXT:
 			SendMessage(hToolbar, TB_HIDEBUTTON, IDTBB_JPTEXT, FALSE);
@@ -2363,6 +2364,7 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 			jp_or_eu = 0;
 			drawchrpalette();
 			updatechrpalette(hwnd);
+			vram2disp(hwnd);
 			return 0;
 		    case IDM_GRID:
 			showgrid ^= 1;
