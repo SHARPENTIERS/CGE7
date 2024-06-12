@@ -5,6 +5,8 @@
 #include "CGE7.h"
 #include "cpal.h"
 
+#include <stdio.h>
+
 int YOKO;
 int TATE;
 int CPALX;
@@ -220,25 +222,81 @@ int loadmzfont(char *fn, int normal) {
 	return 1;
 }
 #else
+
+unsigned char mzfont_linebuf[256];
+
+int convertmzfont(LPCSTR fn, int jp_or_eu) {
+	int i, j, mask;
+	int base = 0;
+	int endf = 0;
+	int val;
+	FILE *fp;
+
+	//char *dot = strrchr(fn, '.');
+
+	//if ((NULL == dot) || (0 != strcmp(dot, ".txt"))) return 0;
+
+	fp = fopen(fn, "rt");
+	if (fp == NULL) return 0;
+
+	memset(&cgrom[jp_or_eu][0], 0, 8192);
+
+	while (1) {
+		if (fgets(mzfont_linebuf, sizeof(mzfont_linebuf), fp) == NULL) break;
+
+		if (mzfont_linebuf[0] == '#') {
+			sscanf(mzfont_linebuf + 1, "%x", &base);
+
+			for (j = 0; j < 8; j++) {
+				if (fgets(mzfont_linebuf, sizeof(mzfont_linebuf), fp) == NULL) {
+					endf = 1;
+					break;
+				}
+				if (!mzfont_linebuf[0]) {
+					endf = 1;
+					break;
+				}
+
+				mask = 128;
+				val = 0;
+				for (i = 0; i < 8; i++) {
+					if (mzfont_linebuf[i] != '.') val |= mask;
+					mask >>= 1;
+				}
+				cgrom[jp_or_eu][base * 8 + j] = val;
+			}
+
+			if (endf) break;
+		}
+	}
+
+	fclose(fp);
+
+	return 1;
+}
+
 int loadmzfont(LPCSTR fn, int jp_or_eu)
 {
-	DWORD bytesread;
+	DWORD bytesread = 0;
 
 	memset(&cgrom[jp_or_eu][0], 0, 8192);
 
 	if (fn)
 	{
-		HANDLE fp = CreateFile(
-			fn, GENERIC_READ, FILE_SHARE_READ, NULL,
-			OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+		if (!convertmzfont(fn, jp_or_eu))
+		{
+			HANDLE fp = CreateFile(
+				fn, GENERIC_READ, FILE_SHARE_READ, NULL,
+				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-		if (fp == INVALID_HANDLE_VALUE)
-			return 0;
+			if (fp == INVALID_HANDLE_VALUE)
+				return 0;
 
-		if (!ReadFile(fp, &cgrom[jp_or_eu][0], 8192, &bytesread, NULL))
-			return 0;
+			if (!ReadFile(fp, &cgrom[jp_or_eu][0], 8192, &bytesread, NULL))
+				return 0;
 
-		CloseHandle(fp);
+			CloseHandle(fp);
+		}
 	}
 	else
 	{
@@ -271,13 +329,16 @@ int loadmzfont(LPCSTR fn, int jp_or_eu)
 		}
 	}
 
-	memcpy(
-		&cgrom[jp_or_eu][4096],
-		&cgrom[jp_or_eu][0],
-		4096);
+	if (bytesread <= 4096) {
+		memcpy(
+			&cgrom[jp_or_eu][4096],
+			&cgrom[jp_or_eu][0],
+			4096);
+	}
 
 	return 1;
 }
+
 #endif
 
 /*---------------------------------------------------------------------------*/
@@ -424,7 +485,7 @@ void drawchr_m(int x, int y, int chr, int attr) {
 	unsigned char c, *cgr, m;
 	DWORD fc, bc, *p1;
 	w = 8 * (expansion+1);
-	cgr = &cgrom[jp_or_eu][/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[jp_or_eu][((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	yy = y;
@@ -480,7 +541,7 @@ void drawchr_e(int x, int y, int chr, int attr) {
 	int i,j;
 	unsigned char c, *cgr;
 	DWORD fc, bc, *p1, *p2;
-	cgr = &cgrom[jp_or_eu][/*((attr & 0x08)<<9)+*/((attr & 0x0080)<<4)+(chr<<3)];
+	cgr = &cgrom[jp_or_eu][((attr & 0x08)<<9)+((attr & 0x0080)<<4)+(chr<<3)];
 	fc = colortable[(attr & 0x70) >> 4];
 	bc = colortable[(attr & 0x07)     ];
 	for (i=0; i<8; i++) {
@@ -637,7 +698,7 @@ void drawchrpalette(void) {
 			a = (forecolor << 4) | backcolor;
 		}
 		a |= (k & 0x0100) >> 1;
-		a |= (cspalno >= 2) ? 0x08 : 0;
+		a |= (cspalno >= 4) ? 0x08 : 0;
 		if (expansion)
 		    drawchr_m(CPALX+j*9*(expansion+1), CPALY+i*9*(expansion+1), c, a);
 		else
@@ -655,9 +716,9 @@ void get_chr_attr(int *c, int *a) {
 	    *a = ((k & (CPAL_FCMASK|CPAL_BCMASK)) >> 16) | ((k & 0x0100) >> 1);
 	else {
 	    if (k & CPAL_REVERSE)
-		*a = ((k & 0x0100) >> 1) | (backcolor << 4) | forecolor | ((cspalno >= 2) ? 0x08 : 0);
+		*a = ((k & 0x0100) >> 1) | (backcolor << 4) | forecolor | ((cspalno >= 4) ? 0x08 : 0);
 	    else
-		*a = ((k & 0x0100) >> 1) | (forecolor << 4) | backcolor | ((cspalno >= 2) ? 0x08 : 0);
+		*a = ((k & 0x0100) >> 1) | (forecolor << 4) | backcolor | ((cspalno >= 4) ? 0x08 : 0);
 	}
 }
 
@@ -1683,15 +1744,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	bit3color = RGB(0xCC, 0x00, 0xCC);
 
-#if 0
-	if (!loadmzfont("mz700fon.dat", 1)) {
-	    MessageBox(NULL, (LPCSTR)"MZ700FON.DAT not found", (LPCSTR)"Error", MB_OK);
-	    return 0;
-	}
-#else
-	loadmzfont(NULL, 0);
-	loadmzfont(NULL, 1);
-#endif
+	convertmzfont("mz700fonE.txt", 0) || loadmzfont(NULL, 0);
+	
+	convertmzfont("mz700fonJ.txt", 1) || convertmzfont("mz700fon.txt", 1) || loadmzfont("mz700fon.dat", 1) || loadmzfont(NULL, 1);
 
 	for (i=0; i<9; i++) animsel[i].x1 = -1;
 
@@ -2308,10 +2363,8 @@ sel_bit3pen:		currtool = IDTBB_BIT3;
 			land_floater();
 			hide_selection();
 			currcursor = 0;
-			if (showbit3 == 0) {
-			    showbit3 = 1;
-			    vram2disp(hwnd);
-			}
+			showbit3 ^= 1;
+			vram2disp(hwnd);
 			return 0;
 
 		    case IDTBB_SAVE:
@@ -2435,8 +2488,8 @@ colswap:		SendMessage(hToolbar, TB_CHECKBUTTON, IDTBB_F_BLACK + backcolor, TRUE)
 		    }
 
 		    case IDM_ALTPAL:
-palswap:		cspalno ^= 1;
-			CheckMenuItem(GetMenu(hwnd), IDM_ALTPAL, (cspalno & 1) ? MF_CHECKED : MF_UNCHECKED);
+palswap:		cspalno = (cspalno + 1) % 6;
+			//CheckMenuItem(GetMenu(hwnd), IDM_ALTPAL, (cspalno & 1) ? MF_CHECKED : MF_UNCHECKED);
 			drawchrpalette();
 			updatechrpalette(hwnd);
 			return 0;
