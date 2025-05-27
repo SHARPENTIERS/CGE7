@@ -1,7 +1,7 @@
 #ifndef __CGE7_H__
 #define __CGE7_H__
 
-#define VERSTRING	"0.23"
+#define VERSTRING	"0.24"
 
 //#define YOKO	(8+640+10+(16*16+15*2)+8)
 //#define TATE	(8+400+8)
@@ -51,6 +51,7 @@
 #define IDM_HREVERSE	1029
 #define IDM_VREVERSE	1030
 #define IDM_MARKISTP	1031
+#define IDM_REDUCEVLINE	1032
 
 #define	IDM_GRID	1040
 #define	IDM_EXPAND	1041
@@ -62,6 +63,7 @@
 #define IDM_STATUSBAR	1047
 #define IDM_GRIDTYPE0	1048
 #define IDM_GRIDTYPE1	1049
+#define IDM_SIMVLINE	1050
 
 #define	IDM_DO_ANIM	1060
 #define	IDM_ANIM1	1061

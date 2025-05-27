@@ -91,6 +91,7 @@ int showbit3 = 0;
 int mark_is_tp = 0;
 int showstatusbar = 0;
 int gridtype = 0;
+int simvline = 0;
 
 int semigrapen = 0;
 int bit3pen = 0;
@@ -352,6 +353,29 @@ int is_onselection(int x, int y) {
 }
 
 /*---------------------------------------------------------------------------*/
+void drawvline(int x, int y, int prevchr, int attr) {
+	int i,j,k,l,w;
+	int yy;
+	unsigned char c, *cgr, m;
+	DWORD fc, bc, *p1;
+	w = 8 * (expansion+1);
+	cgr = &cgrom[((attr & 0x0080)<<4)+(prevchr<<3)];
+	fc = colortable[(attr & 0x70) >> 4];
+	bc = colortable[(attr & 0x07)     ];
+	yy = y;
+	for (i=0; i<8; i++) {
+	    c = *cgr++;
+	    for (k=0; k<expansion+1; k++) {
+		p1 = (DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-yy)*(bkbuf.w)*4 + x*4];
+		if (c & 0x01) {
+		    for (l=0; l<expansion+1; l++) *p1 = fc;
+		} else {
+		    for (l=0; l<expansion+1; l++) *p1 = bc;
+		}
+		yy++;
+	    }
+	}
+}
 void drawchr_m(int x, int y, int chr, int attr) {
 	int i,j,k,l,w;
 	int yy;
@@ -483,17 +507,20 @@ void drawchr_n(int x, int y, int chr, int attr) {
 	    *((DWORD *)&bkbuf.lpBMP[(bkbuf.h-1-(y-9+i))*(bkbuf.w)*4 + (x+i-1)*4]) = bit3color;
 	}
 }
-void drawchr(int x, int y, int chr, int attr) {
+void drawchr(int x, int y, int c, int a) {
 	if (expansion)
-	    drawchr_m(x, y, chr, attr);
+	    drawchr_m(x, y, c, a);
 	else
-	    drawchr_n(x, y, chr, attr);
+	    drawchr_n(x, y, c, a);
 }
 
-void putchr(int x, int y, int chr, int attr) {
+void putchr(int x, int y, int c, int a) {
 	int gx, gy;
 	vramxy2winxy(x, y, &gx, &gy);
-	drawchr(gx, gy, chr, attr);
+	drawchr(gx, gy, c, a);
+	if (simvline && x>0) {
+	    drawvline(gx, gy, chr[y*40+x-1], a);
+	}
 }
 
 void pset(int x, int y, int c, int a) {
@@ -1234,6 +1261,58 @@ void shift_sg_in_floater(int dir) {
 	if (doland) land_floater();
 }
 
+int isspacechr(int c, int a) {
+	return (c == 0x00 || c == 0xF0 || c == 0x43 || ((a & 0x70) >> 4) == (a & 0x07));
+}
+void reduce_vline_row(int lx, int rx, int y) {
+	int lc, la, rc, ra;
+	int c, a;
+	int x;
+	int i, j, k;
+	unsigned char *cgr;
+	lc = la = -1;
+	
+	/* Step 1. Change all spaces to square */
+	for (x = lx; x <= rx; x++) {
+	    i = y * 40 + x;
+	    c = floaterchr[i];
+	    a = floateratr[i];
+	    if (isspacechr(c, a)) {
+		floaterchr[i] = 0x43;
+		if (c == 0x00 || c == 0xF0) a = (a & 0x88) | (a & 0x07) | ((a & 0x07) << 4);
+		else if (c == 0x43)         a = (a & 0x88) | (a & 0x70) | ((a & 0x70) >> 4);
+		floateratr[i] = a;
+	    }
+	}
+	/* Step 2. Search square+nonspace connected with backcolor and change it to space */
+	for (x = lx; x < rx; x++) {
+	    i = y * 40 + x;
+	    lc = floaterchr[i];
+	    la = floateratr[i];
+	    rc = floaterchr[i+1];
+	    ra = floateratr[i+1];
+	    if (lc == 0x43 && rc != 0x43) {
+		cgr = &cgrom[((ra & 0x0080)<<4)+(rc<<3)];
+		for (j=0, k=0; j<8; j++) {
+		    if (*cgr++ & 0x80) k++;
+		}
+		if (k <= 4 && (ra & 0x07) == (la & 0x07)) {
+		    floaterchr[i] = 0xF0;
+		}
+	    }
+	}
+}
+
+void reduce_vline_floater(void) {
+	int i, j, k, l;
+	int c, a, lc, la, rc, ra;
+	if (!selection || !floater) return;
+	for (i = 0; i < (sely2-sely1+1); i++) {
+	    reduce_vline_row(0, selx2 - selx1, i);
+	}
+	refresh_floater();
+}
+
 void getPastePos(int w, int h, int *x, int *y) {
 	int dx, dy;
 	dx = lastvx - w/2; dy = lastvy - h/2;
@@ -1727,6 +1806,7 @@ void treatmenu(HWND hwnd, HMENU hMenu) {
 		case IDM_FILL:
 		case IDM_HREVERSE:
 		case IDM_VREVERSE:
+		case IDM_REDUCEVLINE:
 		case IDM_BITMAPCOPY:
 		    EnableMenuItem(hMenu, id, (selection) ? MF_ENABLED : MF_GRAYED);
 		    break;
@@ -2133,6 +2213,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPARAM lParam) {
 			}
 			return 0;
 
+		    case IDM_REDUCEVLINE:
+			if (selection) {
+			    int doland;
+			    doland = 0;
+			    if (!floater) {
+				selection_to_floater();
+				doland = 1;
+			    }
+			    reduce_vline_floater();
+			    if (doland) land_floater();
+			    updatescratcharea(hwnd);
+			}
+			return 0;
+
 		    case IDM_STRINPUT:
 			land_floater();
 			if (currtool != IDTBB_CURSOR) {
@@ -2343,6 +2437,13 @@ showbit3swap:		showbit3 ^= 1;
 			}
 			return 0;
 
+		    case IDM_SIMVLINE:
+			simvline ^= 1;
+			CheckMenuItem(GetMenu(hwnd), IDM_SIMVLINE, simvline ? MF_CHECKED : MF_UNCHECKED);
+			if (floater) refresh_floater();
+			vram2disp(hwnd);
+			return 0;
+
 		    case IDM_MARKISTP:
 			mark_is_tp ^= 1;
 			CheckMenuItem(GetMenu(hwnd), IDM_MARKISTP, mark_is_tp ? MF_CHECKED : MF_UNCHECKED);
@@ -2488,6 +2589,7 @@ savefile:		land_floater();
 			}
 			undoStartEntry();
 			pset(x, y, c, a);
+			if (simvline && x<39) pset(x+1, y, chr[i+1], atr[i+1]);
 			updatescratcharea(hwnd);
 			lastvx = x;
 			lastvy = y;
@@ -2633,6 +2735,7 @@ savefile:		land_floater();
 			    a = (a & 0x7f) | (atr[i] & 0x80);
 			}
 			pset(x, y, c, a);
+			if (simvline && x<39) pset(x+1, y, chr[i+1], atr[i+1]);
 			updatescratcharea(hwnd);
 		    } else if (currtool == IDTBB_CURSOR && (wParam & MK_LBUTTON)) {
 			switch (dragmode) {

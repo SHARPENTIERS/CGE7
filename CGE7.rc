@@ -43,6 +43,7 @@ CGE7Menu MENU DISCARDABLE
         MENUITEM "塗りつぶし",			IDM_FILL,	GRAYED
         MENUITEM "左右反転",			IDM_HREVERSE,	GRAYED
         MENUITEM "上下反転",			IDM_VREVERSE,	GRAYED
+        MENUITEM "縦線軽減",			IDM_REDUCEVLINE,GRAYED
         MENUITEM "文字列入力...",		IDM_STRINPUT
     }
     POPUP "表示(&V)"
@@ -70,6 +71,7 @@ CGE7Menu MENU DISCARDABLE
         MENUITEM "ステータスバー表示",		IDM_STATUSBAR
         MENUITEM "アトリビュートのBit3をマーク\aF9",		IDM_SHOWBIT3
         MENUITEM "ディスプレイコード00hをマーク\aF11",		IDM_SHOWSPACE
+        MENUITEM "縦線をシミュレート",		IDM_SIMVLINE
 	MENUITEM SEPARATOR
         MENUITEM "補助パレット\aSPACE",		IDM_ALTPAL
     }
